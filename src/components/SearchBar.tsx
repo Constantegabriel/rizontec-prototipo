@@ -22,11 +22,11 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Busque por marca, modelo ou ano..."
-          className="w-full px-4 py-3 pl-12 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-4 py-3 pl-12 rounded-full bg-secondary text-foreground border border-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
         />
         <button 
           type="submit" 
-          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-primary"
+          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-primary"
         >
           <Search size={20} />
         </button>

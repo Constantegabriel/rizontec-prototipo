@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -42,8 +42,22 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
-  const [yearRange, setYearRange] = useState<number[]>([minYear, maxYear]);
-  const [priceRange, setPriceRange] = useState<number[]>([minPrice, maxPrice]);
+  const [yearRange, setYearRange] = useState<[number, number]>([minYear, maxYear]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([minPrice, maxPrice]);
+
+  // Update ranges when props change (initial load)
+  useEffect(() => {
+    setYearRange([minYear, maxYear]);
+    setPriceRange([minPrice, maxPrice]);
+  }, [minYear, maxYear, minPrice, maxPrice]);
+
+  const handleYearChange = (values: number[]) => {
+    setYearRange([values[0], values[1]]);
+  };
+
+  const handlePriceChange = (values: number[]) => {
+    setPriceRange([values[0], values[1]]);
+  };
 
   const handleFilter = () => {
     onFilter({
@@ -82,10 +96,10 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
       <Collapsible
         open={isOpen}
         onOpenChange={setIsOpen}
-        className="border rounded-lg bg-white shadow-sm"
+        className="border rounded-lg bg-card shadow-sm"
       >
         <CollapsibleTrigger asChild>
-          <Button variant="ghost" className="w-full flex justify-between p-4">
+          <Button variant="ghost" className="w-full flex justify-between p-4 text-foreground">
             <div className="flex items-center">
               <Filter size={18} className="mr-2" />
               <span>Filtrar veículos</span>
@@ -128,8 +142,8 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
                 min={minYear}
                 max={maxYear}
                 step={1}
-                value={yearRange}
-                onValueChange={setYearRange}
+                value={[yearRange[0], yearRange[1]]}
+                onValueChange={handleYearChange}
                 className="my-6"
               />
             </div>
@@ -142,8 +156,8 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
                 min={minPrice}
                 max={maxPrice}
                 step={1000}
-                value={priceRange}
-                onValueChange={setPriceRange}
+                value={[priceRange[0], priceRange[1]]}
+                onValueChange={handlePriceChange}
                 className="my-6"
               />
             </div>
