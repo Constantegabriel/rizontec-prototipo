@@ -35,7 +35,7 @@ const CarModal: React.FC<CarModalProps> = ({ car, isOpen, onClose }) => {
       <div className="relative bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <button 
           onClick={onClose} 
-          className="absolute right-4 top-4 z-10 bg-white rounded-full p-1 shadow-md"
+          className="absolute right-4 top-4 z-10 bg-gray-700 rounded-full p-1 shadow-md"
         >
           <X size={24} />
         </button>
@@ -52,13 +52,13 @@ const CarModal: React.FC<CarModalProps> = ({ car, isOpen, onClose }) => {
               <>
                 <button 
                   onClick={prevImage} 
-                  className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-75 rounded-full p-1"
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-gray-700 bg-opacity-75 rounded-full p-1"
                 >
                   <ChevronLeft size={24} />
                 </button>
                 <button 
                   onClick={nextImage} 
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-75 rounded-full p-1"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-700 bg-opacity-75 rounded-full p-1"
                 >
                   <ChevronRight size={24} />
                 </button>
@@ -83,38 +83,38 @@ const CarModal: React.FC<CarModalProps> = ({ car, isOpen, onClose }) => {
         <div className="p-6">
           <div className="flex flex-col md:flex-row md:justify-between md:items-start">
             <div>
-              <h2 className="text-2xl font-bold">{car.name}</h2>
+              <h2 className="text-2xl font-bold text-gray-500">{car.name}</h2>
               <p className="text-lg text-gray-600">{car.version} • {car.year}</p>
             </div>
             <p className="text-2xl font-bold text-primary mt-2 md:mt-0">{formatPrice(car.price)}</p>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-            <div className="bg-gray-100 p-3 rounded-lg">
+            <div className="bg-gray-100 text-gray-500 p-3 rounded-lg">
               <p className="text-sm text-gray-500">Quilometragem</p>
               <p className="font-semibold">{car.mileage.toLocaleString()} km</p>
             </div>
-            <div className="bg-gray-100 p-3 rounded-lg">
+            <div className="bg-gray-100 text-gray-500 p-3 rounded-lg">
               <p className="text-sm text-gray-500">Combustível</p>
               <p className="font-semibold">{car.fuel}</p>
             </div>
-            <div className="bg-gray-100 p-3 rounded-lg">
+            <div className="bg-gray-100 text-gray-500 p-3 rounded-lg">
               <p className="text-sm text-gray-500">Câmbio</p>
               <p className="font-semibold">{car.transmission}</p>
             </div>
-            <div className="bg-gray-100 p-3 rounded-lg">
+            <div className="bg-gray-100 text-gray-500 p-3 rounded-lg">
               <p className="text-sm text-gray-500">Cor</p>
               <p className="font-semibold">{car.color}</p>
             </div>
           </div>
           
           <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-2">Descrição</h3>
+            <h3 className="text-lg font-semibold text-gray-500 mb-2">Descrição</h3>
             <p className="text-gray-700">{car.description}</p>
           </div>
           
           <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-2">Características</h3>
+            <h3 className="text-lg font-semibold text-gray-500 mb-2">Características</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {car.features.map((feature, index) => (
                 <div key={index} className="flex items-center">

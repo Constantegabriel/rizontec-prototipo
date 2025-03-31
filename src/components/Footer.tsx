@@ -4,7 +4,7 @@ import { MapPin, Phone, Mail, Facebook, Instagram } from 'lucide-react';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-gray-800 text-white mt-12 py-8">
+    <footer className="bg-card shadow-sm text-white mt-12 py-8">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
@@ -19,15 +19,15 @@ const Footer: React.FC = () => {
             <ul className="space-y-2">
               <li className="flex items-center">
                 <MapPin size={18} className="mr-2 text-primary" />
-                <span>Av. das Concessionárias, 1234, São Paulo - SP</span>
+                <span>Av. das Concessionárias, 1234, Santa Catarina - SC</span>
               </li>
               <li className="flex items-center">
                 <Phone size={18} className="mr-2 text-primary" />
-                <span>(11) 99999-9999</span>
+                <span>(48) 99814-3419</span>
               </li>
               <li className="flex items-center">
                 <Mail size={18} className="mr-2 text-primary" />
-                <span>contato@autostore.com.br</span>
+                <span>rizontecoficial@gmail.com</span>
               </li>
             </ul>
           </div>
