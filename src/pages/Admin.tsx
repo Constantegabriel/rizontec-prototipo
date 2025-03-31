@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,19 +12,18 @@ import { useForm } from 'react-hook-form';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Car, cars as initialCars } from '@/data/cars';
-import { Trash2, LogOut } from 'lucide-react';
+import { Trash2, LogOut, Image, Upload } from 'lucide-react';
 
 // Schema for car form validation
 const carSchema = z.object({
   name: z.string().min(1, 'Nome do carro é obrigatório'),
-  price: z.string().min(1, 'Preço é obrigatório'),
+  price: z.coerce.number().min(1, 'Preço é obrigatório'),
   year: z.coerce.number().min(1900, 'Ano inválido'),
   version: z.string().min(1, 'Versão é obrigatória'),
   color: z.string().min(1, 'Cor é obrigatória'),
   mileage: z.coerce.number().min(0, 'Quilometragem inválida'),
   transmission: z.string().min(1, 'Transmissão é obrigatória'),
   fuel: z.string().min(1, 'Combustível é obrigatório'),
-  image: z.string().min(1, 'URL da imagem é obrigatória'),
 });
 
 type CarFormValues = z.infer<typeof carSchema>;
@@ -33,6 +32,8 @@ const Admin: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [cars, setCars] = useState<Car[]>([]);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Load cars from localStorage or use initial data
   useEffect(() => {
@@ -56,20 +57,54 @@ const Admin: React.FC = () => {
     resolver: zodResolver(carSchema),
     defaultValues: {
       name: '',
-      price: '',
+      price: 0,
       year: new Date().getFullYear(),
       version: '',
       color: '',
       mileage: 0,
       transmission: '',
       fuel: '',
-      image: '',
     },
   });
   
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    const newImages: string[] = [];
+    
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          newImages.push(e.target.result as string);
+          setUploadedImages(prev => [...prev, e.target!.result as string]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+  
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+  
+  const removeImage = (index: number) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+  };
+  
   const onSubmit = (values: CarFormValues) => {
+    if (uploadedImages.length === 0) {
+      toast({
+        title: "Erro",
+        description: "Adicione pelo menos uma imagem do veículo",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const newCar: Car = {
-      id: Date.now().toString(),
+      id: Date.now(),
       name: values.name,
       price: values.price,
       year: values.year,
@@ -78,8 +113,9 @@ const Admin: React.FC = () => {
       mileage: values.mileage,
       transmission: values.transmission,
       fuel: values.fuel,
-      image: values.image,
-      images: [values.image],
+      images: uploadedImages,
+      features: [],
+      description: `${values.name} ${values.version} ${values.year}`,
     };
     
     const updatedCars = [...cars, newCar];
@@ -87,6 +123,7 @@ const Admin: React.FC = () => {
     localStorage.setItem('cars', JSON.stringify(updatedCars));
     
     form.reset();
+    setUploadedImages([]);
     
     toast({
       title: 'Carro adicionado',
@@ -94,7 +131,7 @@ const Admin: React.FC = () => {
     });
   };
   
-  const handleDeleteCar = (id: string) => {
+  const handleDeleteCar = (id: number) => {
     const updatedCars = cars.filter(car => car.id !== id);
     setCars(updatedCars);
     localStorage.setItem('cars', JSON.stringify(updatedCars));
@@ -157,7 +194,7 @@ const Admin: React.FC = () => {
                         <FormItem>
                           <FormLabel>Preço</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ex: R$ 75.990" {...field} />
+                            <Input type="number" placeholder="Ex: 75990" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -249,19 +286,50 @@ const Admin: React.FC = () => {
                     />
                   </div>
                   
-                  <FormField
-                    control={form.control}
-                    name="image"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>URL da Imagem</FormLabel>
-                        <FormControl>
-                          <Input placeholder="URL da imagem principal" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium">Imagens do Veículo</label>
+                    
+                    <div className="flex flex-wrap gap-2">
+                      {uploadedImages.map((img, index) => (
+                        <div key={index} className="relative w-20 h-20">
+                          <img 
+                            src={img} 
+                            alt={`Preview ${index+1}`} 
+                            className="w-full h-full object-cover rounded-md"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                      
+                      <button
+                        type="button"
+                        onClick={triggerFileInput}
+                        className="w-20 h-20 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-md hover:border-primary transition-colors"
+                      >
+                        <Upload size={20} className="mb-1 text-gray-500" />
+                        <span className="text-xs text-gray-500">Adicionar</span>
+                      </button>
+                    </div>
+                    
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    
+                    <p className="text-xs text-gray-500">
+                      Adicione pelo menos uma imagem do veículo
+                    </p>
+                  </div>
                   
                   <Button type="submit" className="w-full">Adicionar Veículo</Button>
                 </form>
@@ -279,7 +347,7 @@ const Admin: React.FC = () => {
                 cars.map((car) => (
                   <div key={car.id} className="flex items-center gap-4 p-4 border rounded-lg">
                     <img 
-                      src={car.image} 
+                      src={car.images[0]} 
                       alt={car.name} 
                       className="w-20 h-20 object-cover rounded"
                       onError={(e) => {
@@ -290,7 +358,7 @@ const Admin: React.FC = () => {
                     <div className="flex-grow">
                       <h4 className="font-semibold">{car.name}</h4>
                       <p className="text-sm text-gray-600">
-                        {car.year} • {car.version} • {car.price}
+                        {car.year} • {car.version} • {car.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                       </p>
                     </div>
                     <Button 
