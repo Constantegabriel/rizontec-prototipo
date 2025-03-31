@@ -12,7 +12,9 @@ import { useForm } from 'react-hook-form';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Car, cars as initialCars } from '@/data/cars';
-import { Trash2, LogOut, Image, Upload } from 'lucide-react';
+import { Trash2, LogOut, Image, Upload, Edit, Plus } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import CarEditModal from '@/components/CarEditModal';
 
 // Schema for car form validation
 const carSchema = z.object({
@@ -24,6 +26,8 @@ const carSchema = z.object({
   mileage: z.coerce.number().min(0, 'Quilometragem inválida'),
   transmission: z.string().min(1, 'Transmissão é obrigatória'),
   fuel: z.string().min(1, 'Combustível é obrigatório'),
+  description: z.string().optional(),
+  features: z.string().optional(),
 });
 
 type CarFormValues = z.infer<typeof carSchema>;
@@ -34,6 +38,10 @@ const Admin: React.FC = () => {
   const [cars, setCars] = useState<Car[]>([]);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [carFeatures, setCarFeatures] = useState<string[]>([]);
+  const [featureInput, setFeatureInput] = useState('');
+  const [selectedCar, setSelectedCar] = useState<Car | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
   // Load cars from localStorage or use initial data
   useEffect(() => {
@@ -64,6 +72,8 @@ const Admin: React.FC = () => {
       mileage: 0,
       transmission: '',
       fuel: '',
+      description: '',
+      features: '',
     },
   });
   
@@ -93,6 +103,17 @@ const Admin: React.FC = () => {
     setUploadedImages(prev => prev.filter((_, i) => i !== index));
   };
   
+  const addFeature = () => {
+    if (featureInput.trim() !== '') {
+      setCarFeatures(prev => [...prev, featureInput.trim()]);
+      setFeatureInput('');
+    }
+  };
+  
+  const removeFeature = (index: number) => {
+    setCarFeatures(prev => prev.filter((_, i) => i !== index));
+  };
+  
   const onSubmit = (values: CarFormValues) => {
     if (uploadedImages.length === 0) {
       toast({
@@ -114,8 +135,8 @@ const Admin: React.FC = () => {
       transmission: values.transmission,
       fuel: values.fuel,
       images: uploadedImages,
-      features: [],
-      description: `${values.name} ${values.version} ${values.year}`,
+      features: carFeatures,
+      description: values.description || `${values.name} ${values.version} ${values.year}`,
     };
     
     const updatedCars = [...cars, newCar];
@@ -124,6 +145,7 @@ const Admin: React.FC = () => {
     
     form.reset();
     setUploadedImages([]);
+    setCarFeatures([]);
     
     toast({
       title: 'Carro adicionado',
@@ -142,6 +164,11 @@ const Admin: React.FC = () => {
     });
   };
   
+  const handleEditCar = (car: Car) => {
+    setSelectedCar(car);
+    setIsEditModalOpen(true);
+  };
+  
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated');
     navigate('/');
@@ -149,6 +176,22 @@ const Admin: React.FC = () => {
     toast({
       title: 'Logout realizado',
       description: 'Você saiu da área administrativa',
+    });
+  };
+  
+  const handleCarUpdated = (updatedCar: Car) => {
+    const updatedCars = cars.map(car => 
+      car.id === updatedCar.id ? updatedCar : car
+    );
+    
+    setCars(updatedCars);
+    localStorage.setItem('cars', JSON.stringify(updatedCars));
+    setIsEditModalOpen(false);
+    setSelectedCar(null);
+    
+    toast({
+      title: 'Carro atualizado',
+      description: `${updatedCar.name} foi atualizado no estoque`,
     });
   };
   
@@ -285,6 +328,60 @@ const Admin: React.FC = () => {
                       )}
                     />
                   </div>
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Descrição</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Descreva o veículo, seu estado, características, etc." 
+                            className="min-h-[100px]"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium">Características</label>
+                    <div className="flex">
+                      <Input
+                        value={featureInput}
+                        onChange={(e) => setFeatureInput(e.target.value)}
+                        placeholder="Ex: Ar condicionado"
+                        className="mr-2"
+                      />
+                      <Button 
+                        type="button" 
+                        onClick={addFeature}
+                        variant="outline"
+                      >
+                        <Plus size={16} />
+                      </Button>
+                    </div>
+                    
+                    {carFeatures.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {carFeatures.map((feature, index) => (
+                          <div key={index} className="bg-secondary text-secondary-foreground px-3 py-1 rounded-full flex items-center">
+                            <span className="mr-2">{feature}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeFeature(index)}
+                              className="text-muted-foreground hover:text-foreground"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   
                   <div className="space-y-2">
                     <label className="block text-sm font-medium">Imagens do Veículo</label>
@@ -361,14 +458,24 @@ const Admin: React.FC = () => {
                         {car.year} • {car.version} • {car.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                       </p>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className="text-red-500 hover:bg-red-50 hover:text-red-600"
-                      onClick={() => handleDeleteCar(car.id)}
-                    >
-                      <Trash2 size={18} />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="text-blue-500 hover:bg-blue-50 hover:text-blue-600"
+                        onClick={() => handleEditCar(car)}
+                      >
+                        <Edit size={18} />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                        onClick={() => handleDeleteCar(car.id)}
+                      >
+                        <Trash2 size={18} />
+                      </Button>
+                    </div>
                   </div>
                 ))
               )}
@@ -376,6 +483,15 @@ const Admin: React.FC = () => {
           </div>
         </div>
       </main>
+      
+      {selectedCar && (
+        <CarEditModal
+          car={selectedCar}
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onUpdate={handleCarUpdated}
+        />
+      )}
       
       <Footer />
     </div>
