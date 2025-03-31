@@ -1,22 +1,33 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
 import CarGrid from '../components/CarGrid';
 import Footer from '../components/Footer';
-import { cars, Car } from '../data/cars';
+import { cars as initialCars, Car } from '../data/cars';
 
 const Index: React.FC = () => {
-  const [filteredCars, setFilteredCars] = useState<Car[]>(cars);
+  const [allCars, setAllCars] = useState<Car[]>(initialCars);
+  const [filteredCars, setFilteredCars] = useState<Car[]>(initialCars);
+
+  // Load cars from localStorage if available
+  useEffect(() => {
+    const savedCars = localStorage.getItem('cars');
+    if (savedCars) {
+      const parsedCars = JSON.parse(savedCars);
+      setAllCars(parsedCars);
+      setFilteredCars(parsedCars);
+    }
+  }, []);
 
   const handleSearch = (query: string) => {
     if (!query.trim()) {
-      setFilteredCars(cars);
+      setFilteredCars(allCars);
       return;
     }
     
     const searchTerm = query.toLowerCase().trim();
-    const results = cars.filter(car => 
+    const results = allCars.filter(car => 
       car.name.toLowerCase().includes(searchTerm) || 
       car.version.toLowerCase().includes(searchTerm) || 
       car.year.toString().includes(searchTerm)
