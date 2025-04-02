@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
@@ -7,7 +6,6 @@ import CarGrid from '../components/CarGrid';
 import Footer from '../components/Footer';
 import { cars as initialCars, Car } from '../data/cars';
 import { Button } from '@/components/ui/button';
-import { RefreshCcw } from 'lucide-react';
 
 const Index: React.FC = () => {
   const [allCars, setAllCars] = useState<Car[]>(initialCars);
@@ -135,15 +133,6 @@ const Index: React.FC = () => {
           <div className="w-full">
             <div className="flex items-center justify-between mb-4">
               <SearchBar onSearch={handleSearch} />
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={handleRefresh} 
-                className="ml-2"
-                title="Atualizar veículos"
-              >
-                <RefreshCcw className="h-4 w-4" />
-              </Button>
             </div>
             
             <FilterMenu 
@@ -154,6 +143,16 @@ const Index: React.FC = () => {
               maxPrice={maxPrice}
               brands={brands}
             />
+            
+            <div className="flex justify-center my-6">
+              <Button 
+                onClick={handleRefresh} 
+                className="px-8 py-6 text-lg font-medium"
+                size="lg"
+              >
+                Ver Estoque
+              </Button>
+            </div>
             
             <div className="mt-4 mb-2">
               <p className="text-gray-600">

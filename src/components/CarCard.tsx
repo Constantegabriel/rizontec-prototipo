@@ -18,7 +18,7 @@ const CarCard: React.FC<CarCardProps> = ({ car, onClick }) => {
 
   return (
     <div 
-      className="bg-white bg-border p-1 rounded-lg shadow-md overflow-hidden transition-transform hover:shadow-lg hover:-translate-y-1 cursor-pointer"
+      className="bg-gray-800 border border-gray-700 p-1 rounded-lg shadow-md overflow-hidden transition-transform hover:shadow-lg hover:-translate-y-1 cursor-pointer"
       onClick={onClick}
     >
       <div className="relative">
@@ -30,13 +30,13 @@ const CarCard: React.FC<CarCardProps> = ({ car, onClick }) => {
         />
       </div>
       <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-700">{car.name}</h3>
+        <h3 className="text-lg font-semibold text-gray-200">{car.name}</h3>
         <div className="flex justify-between items-center mt-2">
           <p className="text-base font-bold text-primary">{formatPrice(car.price)}</p>
           <div className="flex items-center space-x-1">
-            <span className="text-sm text-gray-600">{car.year}</span>
-            <span className="text-gray-500">•</span>
-            <span className="text-sm text-gray-600">{car.version}</span>
+            <span className="text-sm text-gray-300">{car.year}</span>
+            <span className="text-gray-400">•</span>
+            <span className="text-sm text-gray-300">{car.version}</span>
           </div>
         </div>
       </div>

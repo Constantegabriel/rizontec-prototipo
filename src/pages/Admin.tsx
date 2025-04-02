@@ -12,9 +12,11 @@ import { useForm } from 'react-hook-form';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Car, cars as initialCars } from '@/data/cars';
-import { Trash2, LogOut, Image, Upload, Edit, Plus } from 'lucide-react';
+import { Trash2, LogOut, Upload, Edit, Plus } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import CarEditModal from '@/components/CarEditModal';
+import AdminStats from '@/components/AdminStats';
+import { logCarActivity } from '@/utils/activityLogger';
 
 // Schema for car form validation
 const carSchema = z.object({
@@ -42,6 +44,7 @@ const Admin: React.FC = () => {
   const [featureInput, setFeatureInput] = useState('');
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'add' | 'list' | 'stats'>('add');
   
   // Load cars from localStorage or use initial data
   useEffect(() => {
@@ -143,6 +146,9 @@ const Admin: React.FC = () => {
     setCars(updatedCars);
     localStorage.setItem('cars', JSON.stringify(updatedCars));
     
+    // Log the activity
+    logCarActivity(newCar, 'added');
+    
     form.reset();
     setUploadedImages([]);
     setCarFeatures([]);
@@ -154,9 +160,15 @@ const Admin: React.FC = () => {
   };
   
   const handleDeleteCar = (id: number) => {
+    const carToDelete = cars.find(car => car.id === id);
+    if (!carToDelete) return;
+    
     const updatedCars = cars.filter(car => car.id !== id);
     setCars(updatedCars);
     localStorage.setItem('cars', JSON.stringify(updatedCars));
+    
+    // Log the activity
+    logCarActivity(carToDelete, 'deleted');
     
     toast({
       title: 'Carro removido',
@@ -186,6 +198,10 @@ const Admin: React.FC = () => {
     
     setCars(updatedCars);
     localStorage.setItem('cars', JSON.stringify(updatedCars));
+    
+    // Log the activity
+    logCarActivity(updatedCar, 'edited');
+    
     setIsEditModalOpen(false);
     setSelectedCar(null);
     
@@ -208,7 +224,42 @@ const Admin: React.FC = () => {
           </Button>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="mb-6 border-b">
+          <div className="flex space-x-4">
+            <button
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'add' 
+                  ? 'border-b-2 border-primary text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => setActiveTab('add')}
+            >
+              Adicionar Veículo
+            </button>
+            <button
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'list' 
+                  ? 'border-b-2 border-primary text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => setActiveTab('list')}
+            >
+              Estoque Atual
+            </button>
+            <button
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'stats' 
+                  ? 'border-b-2 border-primary text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => setActiveTab('stats')}
+            >
+              Estatísticas
+            </button>
+          </div>
+        </div>
+        
+        {activeTab === 'add' && (
           <Card>
             <CardContent className="pt-6">
               <h3 className="text-xl font-semibold mb-4">Adicionar Veículo</h3>
@@ -433,7 +484,9 @@ const Admin: React.FC = () => {
               </Form>
             </CardContent>
           </Card>
-          
+        )}
+        
+        {activeTab === 'list' && (
           <div>
             <h3 className="text-xl font-semibold mb-4">Estoque Atual</h3>
             
@@ -481,7 +534,11 @@ const Admin: React.FC = () => {
               )}
             </div>
           </div>
-        </div>
+        )}
+        
+        {activeTab === 'stats' && (
+          <AdminStats cars={cars} />
+        )}
       </main>
       
       {selectedCar && (
