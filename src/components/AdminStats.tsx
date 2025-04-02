@@ -2,33 +2,37 @@
 import React, { useState, useEffect } from 'react';
 import { Car } from '@/data/cars';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ChevronRight, ChevronDown, LineChart, Car as CarIcon, PlusCircle, MinusCircle, InfoIcon } from 'lucide-react';
-
-type CarActivity = {
-  id: number;
-  carName: string;
-  action: 'added' | 'deleted' | 'edited';
-  timestamp: Date;
-};
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from 'sonner';
+import { ChevronRight, ChevronDown, LineChart, Car as CarIcon, PlusCircle, MinusCircle, InfoIcon, RotateCcw, History } from 'lucide-react';
+import { CarActivity, restoreDeletedCar } from '@/utils/activityLogger';
 
 interface AdminStatsProps {
   cars: Car[];
+  onCarRestored: () => void;
 }
 
-const AdminStats: React.FC<AdminStatsProps> = ({ cars }) => {
+const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
   const [activityLog, setActivityLog] = useState<CarActivity[]>([]);
   const [expandedSections, setExpandedSections] = useState<{[key: string]: boolean}>({
     'total': true,
-    'recent': false
+    'recent': false,
+    'deleted': false
   });
   const [selectedActivity, setSelectedActivity] = useState<CarActivity | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState<'7' | '15' | '30'>('7');
 
   // Load activity log from localStorage on component mount
   useEffect(() => {
+    loadActivityLog();
+  }, []);
+
+  const loadActivityLog = () => {
     const savedLog = localStorage.getItem('carActivityLog');
     if (savedLog) {
       try {
@@ -43,7 +47,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars }) => {
         setActivityLog([]);
       }
     }
-  }, []);
+  };
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
@@ -67,6 +71,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars }) => {
       case 'added': return 'text-green-500';
       case 'deleted': return 'text-red-500';
       case 'edited': return 'text-blue-500';
+      case 'restored': return 'text-amber-500';
       default: return 'text-gray-500';
     }
   };
@@ -76,7 +81,18 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars }) => {
       case 'added': return <PlusCircle className="h-4 w-4 text-green-500" />;
       case 'deleted': return <MinusCircle className="h-4 w-4 text-red-500" />;
       case 'edited': return <InfoIcon className="h-4 w-4 text-blue-500" />;
+      case 'restored': return <RotateCcw className="h-4 w-4 text-amber-500" />;
       default: return null;
+    }
+  };
+
+  const getActionText = (action: string) => {
+    switch (action) {
+      case 'added': return 'Adicionado';
+      case 'deleted': return 'Excluído';
+      case 'edited': return 'Editado';
+      case 'restored': return 'Restaurado';
+      default: return action;
     }
   };
 
@@ -85,25 +101,57 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars }) => {
     setIsDetailsOpen(true);
   };
 
+  const handleRestoreCar = () => {
+    if (!selectedActivity) return;
+    
+    const restoredCar = restoreDeletedCar(selectedActivity.id);
+    if (restoredCar) {
+      toast.success(`Veículo ${restoredCar.name} ${restoredCar.version} restaurado com sucesso!`);
+      loadActivityLog();
+      onCarRestored();
+    } else {
+      toast.error('Não foi possível restaurar o veículo. Ele pode já ter sido restaurado ou os dados podem estar corrompidos.');
+    }
+    
+    setIsRestoreDialogOpen(false);
+    setIsDetailsOpen(false);
+  };
+
+  const openRestoreDialog = (activity: CarActivity) => {
+    setSelectedActivity(activity);
+    setIsRestoreDialogOpen(true);
+  };
+
   // Calculate statistics
   const totalCars = cars.length;
   const addedCars = activityLog.filter(log => log.action === 'added').length;
   const deletedCars = activityLog.filter(log => log.action === 'deleted').length;
   const editedCars = activityLog.filter(log => log.action === 'edited').length;
+  const restoredCars = activityLog.filter(log => log.action === 'restored').length;
   
-  // Get recent activity (last 7 days)
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  // Get activities by period
+  const getActivitiesByPeriod = (days: number) => {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    
+    return activityLog
+      .filter(activity => activity.timestamp > cutoffDate)
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  };
   
-  const recentActivity = activityLog
-    .filter(activity => activity.timestamp > sevenDaysAgo)
+  // Get deleted cars that can be restored
+  const deletedActivities = activityLog
+    .filter(activity => activity.action === 'deleted' && activity.carData)
     .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+
+  // Get recent activities based on selected period
+  const recentActivities = getActivitiesByPeriod(parseInt(selectedPeriod));
 
   return (
     <div className="space-y-6">
       <h3 className="text-xl font-semibold mb-4">Estatísticas do Estoque</h3>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total no Estoque</CardTitle>
@@ -151,6 +199,18 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars }) => {
             </div>
           </CardContent>
         </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Restaurados</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center">
+              <RotateCcw className="h-5 w-5 text-amber-500 mr-2" />
+              <span className="text-2xl font-bold">{restoredCars}</span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
       
       <Card>
@@ -178,7 +238,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars }) => {
                   .map((activity, index) => (
                     <div 
                       key={`${activity.id}-${index}`} 
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-secondary/30 transition-colors"
+                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer"
                       onClick={() => showActivityDetails(activity)}
                     >
                       <div className="flex items-center">
@@ -187,8 +247,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars }) => {
                       </div>
                       <div className="flex items-center">
                         <span className={`mr-3 font-medium ${getActionColor(activity.action)}`}>
-                          {activity.action === 'added' ? 'Adicionado' : 
-                           activity.action === 'deleted' ? 'Excluído' : 'Editado'}
+                          {getActionText(activity.action)}
                         </span>
                         <span className="text-sm text-gray-500">{formatDate(activity.timestamp)}</span>
                       </div>
@@ -206,7 +265,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars }) => {
           onClick={() => toggleSection('recent')}
         >
           <div className="flex justify-between items-center">
-            <CardTitle>Atividade Recente (Últimos 7 dias)</CardTitle>
+            <CardTitle>Atividade Recente</CardTitle>
             {expandedSections.recent ? 
               <ChevronDown className="h-5 w-5" /> : 
               <ChevronRight className="h-5 w-5" />
@@ -215,26 +274,83 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars }) => {
         </CardHeader>
         {expandedSections.recent && (
           <CardContent className="pt-6">
-            {recentActivity.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">Nenhuma atividade recente</p>
+            <Tabs value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as '7' | '15' | '30')}>
+              <TabsList className="mb-4">
+                <TabsTrigger value="7">Últimos 7 dias</TabsTrigger>
+                <TabsTrigger value="15">Últimos 15 dias</TabsTrigger>
+                <TabsTrigger value="30">Últimos 30 dias</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value={selectedPeriod}>
+                {recentActivities.length === 0 ? (
+                  <p className="text-gray-500 text-center py-4">Nenhuma atividade neste período</p>
+                ) : (
+                  <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+                    {recentActivities.map((activity, index) => (
+                      <div 
+                        key={`recent-${activity.id}-${index}`} 
+                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer"
+                        onClick={() => showActivityDetails(activity)}
+                      >
+                        <div className="flex items-center">
+                          {getActionIcon(activity.action)}
+                          <span className="ml-2">{activity.carName}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className={`mr-3 font-medium ${getActionColor(activity.action)}`}>
+                            {getActionText(activity.action)}
+                          </span>
+                          <span className="text-sm text-gray-500">{formatDate(activity.timestamp)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        )}
+      </Card>
+      
+      <Card>
+        <CardHeader 
+          className="cursor-pointer border-b"
+          onClick={() => toggleSection('deleted')}
+        >
+          <div className="flex justify-between items-center">
+            <CardTitle>Veículos Excluídos</CardTitle>
+            {expandedSections.deleted ? 
+              <ChevronDown className="h-5 w-5" /> : 
+              <ChevronRight className="h-5 w-5" />
+            }
+          </div>
+        </CardHeader>
+        {expandedSections.deleted && (
+          <CardContent className="pt-6">
+            {deletedActivities.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">Nenhum veículo excluído para restaurar</p>
             ) : (
               <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
-                {recentActivity.map((activity, index) => (
+                {deletedActivities.map((activity, index) => (
                   <div 
-                    key={`recent-${activity.id}-${index}`} 
+                    key={`deleted-${activity.id}-${index}`} 
                     className="flex items-center justify-between p-3 border rounded-lg hover:bg-secondary/30 transition-colors"
-                    onClick={() => showActivityDetails(activity)}
                   >
                     <div className="flex items-center">
-                      {getActionIcon(activity.action)}
+                      <MinusCircle className="h-4 w-4 text-red-500" />
                       <span className="ml-2">{activity.carName}</span>
                     </div>
-                    <div className="flex items-center">
-                      <span className={`mr-3 font-medium ${getActionColor(activity.action)}`}>
-                        {activity.action === 'added' ? 'Adicionado' : 
-                         activity.action === 'deleted' ? 'Excluído' : 'Editado'}
-                      </span>
+                    <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-500">{formatDate(activity.timestamp)}</span>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => openRestoreDialog(activity)}
+                        className="flex items-center gap-1"
+                      >
+                        <RotateCcw className="h-3 w-3" />
+                        Restaurar
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -248,6 +364,11 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars }) => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Detalhes da Atividade</DialogTitle>
+            {selectedActivity && selectedActivity.action === 'deleted' && selectedActivity.carData && (
+              <DialogDescription>
+                Este veículo foi excluído mas pode ser restaurado.
+              </DialogDescription>
+            )}
           </DialogHeader>
           
           {selectedActivity && (
@@ -260,8 +381,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars }) => {
                 <div>
                   <p className="text-sm text-muted-foreground">Ação</p>
                   <p className={`font-medium ${getActionColor(selectedActivity.action)}`}>
-                    {selectedActivity.action === 'added' ? 'Adicionado' : 
-                     selectedActivity.action === 'deleted' ? 'Excluído' : 'Editado'}
+                    {getActionText(selectedActivity.action)}
                   </p>
                 </div>
                 <div>
@@ -273,10 +393,40 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars }) => {
                   <p className="font-medium">{selectedActivity.id}</p>
                 </div>
               </div>
+              
+              {selectedActivity.action === 'deleted' && selectedActivity.carData && (
+                <div className="pt-4 flex justify-end">
+                  <Button 
+                    onClick={() => openRestoreDialog(selectedActivity)}
+                    className="flex items-center gap-2"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Restaurar Veículo
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
+      
+      <AlertDialog open={isRestoreDialogOpen} onOpenChange={setIsRestoreDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Restaurar Veículo</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja restaurar o veículo {selectedActivity?.carName}?
+              Este veículo será adicionado novamente ao seu estoque.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRestoreCar}>
+              Restaurar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

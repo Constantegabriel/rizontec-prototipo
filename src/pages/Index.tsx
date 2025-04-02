@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
@@ -16,7 +17,9 @@ const Index: React.FC = () => {
     minYear: 0,
     maxYear: 0,
     minPrice: 0,
-    maxPrice: 0
+    maxPrice: 0,
+    transmission: null,
+    maxMileage: null
   });
 
   // Calculate min and max values for filters
@@ -51,7 +54,9 @@ const Index: React.FC = () => {
         minYear,
         maxYear,
         minPrice,
-        maxPrice
+        maxPrice,
+        transmission: null,
+        maxMileage: null
       });
     }
   };
@@ -91,6 +96,20 @@ const Index: React.FC = () => {
     results = results.filter(car => 
       car.price >= filters.minPrice && car.price <= filters.maxPrice
     );
+    
+    // Apply transmission filter if selected
+    if (filters.transmission) {
+      results = results.filter(car => 
+        car.transmission.toLowerCase() === filters.transmission.toLowerCase()
+      );
+    }
+    
+    // Apply mileage filter if selected
+    if (filters.maxMileage) {
+      results = results.filter(car => 
+        car.mileage <= filters.maxMileage
+      );
+    }
     
     setFilteredCars(results);
   };

@@ -14,6 +14,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 interface FilterMenuProps {
   onFilter: (filters: FilterOptions) => void;
@@ -30,6 +32,8 @@ export interface FilterOptions {
   maxYear: number;
   minPrice: number;
   maxPrice: number;
+  transmission: string | null;
+  maxMileage: number | null;
 }
 
 const FilterMenu: React.FC<FilterMenuProps> = ({
@@ -44,6 +48,8 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [yearRange, setYearRange] = useState<[number, number]>([minYear, maxYear]);
   const [priceRange, setPriceRange] = useState<[number, number]>([minPrice, maxPrice]);
+  const [transmission, setTransmission] = useState<string | null>(null);
+  const [maxMileage, setMaxMileage] = useState<number | null>(null);
 
   // Update ranges when props change (initial load)
   useEffect(() => {
@@ -66,6 +72,8 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
       maxYear: yearRange[1],
       minPrice: priceRange[0],
       maxPrice: priceRange[1],
+      transmission,
+      maxMileage,
     });
   };
 
@@ -73,6 +81,8 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
     setSelectedBrand(null);
     setYearRange([minYear, maxYear]);
     setPriceRange([minPrice, maxPrice]);
+    setTransmission(null);
+    setMaxMileage(null);
     
     onFilter({
       brand: null,
@@ -80,6 +90,8 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
       maxYear: maxYear,
       minPrice: minPrice,
       maxPrice: maxPrice,
+      transmission: null,
+      maxMileage: null,
     });
   };
 
@@ -90,6 +102,15 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
       currency: 'BRL',
     });
   };
+
+  // Define opções de quilometragem
+  const mileageOptions = [
+    { label: 'Qualquer', value: null },
+    { label: 'Até 10.000 km', value: 10000 },
+    { label: 'Até 30.000 km', value: 30000 },
+    { label: 'Até 50.000 km', value: 50000 },
+    { label: 'Até 100.000 km', value: 100000 },
+  ];
 
   return (
     <div className="w-full max-w-3xl mx-auto mb-6">
@@ -118,7 +139,7 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
                     <ChevronDown size={16} />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-full">
+                <DropdownMenuContent className="w-full max-h-[200px] overflow-y-auto">
                   <DropdownMenuItem onClick={() => setSelectedBrand(null)}>
                     Todas as marcas
                   </DropdownMenuItem>
@@ -160,6 +181,51 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
                 onValueChange={handlePriceChange}
                 className="my-6"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Transmissão</label>
+              <RadioGroup 
+                value={transmission || ""} 
+                onValueChange={(value) => setTransmission(value || null)}
+                className="flex flex-wrap gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="" id="transmission-all" />
+                  <Label htmlFor="transmission-all">Todas</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Automático" id="transmission-auto" />
+                  <Label htmlFor="transmission-auto">Automático</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Manual" id="transmission-manual" />
+                  <Label htmlFor="transmission-manual">Manual</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="CVT" id="transmission-cvt" />
+                  <Label htmlFor="transmission-cvt">CVT</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Quilometragem</label>
+              <RadioGroup 
+                value={maxMileage?.toString() || ""} 
+                onValueChange={(value) => setMaxMileage(value ? parseInt(value) : null)}
+                className="flex flex-col space-y-2"
+              >
+                {mileageOptions.map((option) => (
+                  <div key={option.value?.toString() || 'any'} className="flex items-center space-x-2">
+                    <RadioGroupItem 
+                      value={option.value?.toString() || ""} 
+                      id={`mileage-${option.value || 'any'}`} 
+                    />
+                    <Label htmlFor={`mileage-${option.value || 'any'}`}>{option.label}</Label>
+                  </div>
+                ))}
+              </RadioGroup>
             </div>
 
             <div className="flex justify-between pt-2">
