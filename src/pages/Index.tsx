@@ -6,6 +6,8 @@ import FilterMenu, { FilterOptions } from '../components/FilterMenu';
 import CarGrid from '../components/CarGrid';
 import Footer from '../components/Footer';
 import { cars as initialCars, Car } from '../data/cars';
+import { Button } from '@/components/ui/button';
+import { RefreshCcw } from 'lucide-react';
 
 const Index: React.FC = () => {
   const [allCars, setAllCars] = useState<Car[]>(initialCars);
@@ -36,13 +38,13 @@ const Index: React.FC = () => {
     };
   };
 
-  // Load cars from localStorage if available
-  useEffect(() => {
+  // Load cars from localStorage
+  const loadCars = () => {
     const savedCars = localStorage.getItem('cars');
     if (savedCars) {
       const parsedCars = JSON.parse(savedCars);
       setAllCars(parsedCars);
-      setFilteredCars(parsedCars);
+      setFilteredCars(parsedCars); // Show all cars by default
       
       // Initialize filter values
       const { minYear, maxYear, minPrice, maxPrice } = getMinMaxValues();
@@ -54,6 +56,11 @@ const Index: React.FC = () => {
         maxPrice
       });
     }
+  };
+
+  // Load cars on initial render
+  useEffect(() => {
+    loadCars();
   }, []);
 
   // Apply search and filters together
@@ -105,6 +112,11 @@ const Index: React.FC = () => {
     applyFilters();
   }, [searchQuery, filters, allCars]);
   
+  // Refresh handler to reload cars
+  const handleRefresh = () => {
+    loadCars();
+  };
+  
   const { minYear, maxYear, minPrice, maxPrice, brands } = getMinMaxValues();
 
   return (
@@ -121,7 +133,18 @@ const Index: React.FC = () => {
         
         <div className="flex flex-col lg:flex-row gap-4 items-start">
           <div className="w-full">
-            <SearchBar onSearch={handleSearch} />
+            <div className="flex items-center justify-between mb-4">
+              <SearchBar onSearch={handleSearch} />
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={handleRefresh} 
+                className="ml-2"
+                title="Atualizar veículos"
+              >
+                <RefreshCcw className="h-4 w-4" />
+              </Button>
+            </div>
             
             <FilterMenu 
               onFilter={handleFilter}
