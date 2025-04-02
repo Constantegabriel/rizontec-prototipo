@@ -7,10 +7,11 @@ import CarGrid from '../components/CarGrid';
 import Footer from '../components/Footer';
 import { cars as initialCars, Car } from '../data/cars';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/use-toast';
 
 const Index: React.FC = () => {
-  const [allCars, setAllCars] = useState<Car[]>(initialCars);
-  const [filteredCars, setFilteredCars] = useState<Car[]>(initialCars);
+  const [allCars, setAllCars] = useState<Car[]>([]);
+  const [filteredCars, setFilteredCars] = useState<Car[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [filters, setFilters] = useState<FilterOptions>({
     brand: null,
@@ -41,23 +42,43 @@ const Index: React.FC = () => {
 
   // Load cars from localStorage
   const loadCars = () => {
-    const savedCars = localStorage.getItem('cars');
-    if (savedCars) {
-      const parsedCars = JSON.parse(savedCars);
-      setAllCars(parsedCars);
-      setFilteredCars(parsedCars); // Show all cars by default
-      
-      // Initialize filter values
-      const { minYear, maxYear, minPrice, maxPrice } = getMinMaxValues();
-      setFilters({
-        brand: null,
-        minYear,
-        maxYear,
-        minPrice,
-        maxPrice,
-        transmission: null,
-        maxMileage: null
+    try {
+      const savedCars = localStorage.getItem('cars');
+      if (savedCars) {
+        const parsedCars = JSON.parse(savedCars);
+        setAllCars(parsedCars);
+        setFilteredCars(parsedCars); // Show all cars by default
+        
+        // Initialize filter values based on data
+        const { minYear, maxYear, minPrice, maxPrice } = getMinMaxValues();
+        setFilters(prev => ({
+          ...prev,
+          minYear,
+          maxYear,
+          minPrice,
+          maxPrice
+        }));
+
+        console.log('Cars loaded from localStorage:', parsedCars.length);
+      } else {
+        // First time loading - save initial cars to localStorage
+        localStorage.setItem('cars', JSON.stringify(initialCars));
+        setAllCars(initialCars);
+        setFilteredCars(initialCars);
+        
+        console.log('Initial cars saved to localStorage:', initialCars.length);
+      }
+    } catch (error) {
+      console.error('Error loading cars:', error);
+      toast({
+        title: "Erro ao carregar veículos",
+        description: "Ocorreu um erro ao carregar os veículos. Por favor, atualize a página.",
+        variant: "destructive"
       });
+      
+      // Fallback to initial cars
+      setAllCars(initialCars);
+      setFilteredCars(initialCars);
     }
   };
 
@@ -132,6 +153,10 @@ const Index: React.FC = () => {
   // Refresh handler to reload cars
   const handleRefresh = () => {
     loadCars();
+    toast({
+      title: "Lista atualizada",
+      description: `${allCars.length} veículos carregados.`
+    });
   };
   
   const { minYear, maxYear, minPrice, maxPrice, brands } = getMinMaxValues();

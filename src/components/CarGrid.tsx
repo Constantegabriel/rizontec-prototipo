@@ -23,13 +23,20 @@ const CarGrid: React.FC<CarGridProps> = ({ cars }) => {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
-      {cars.map((car) => (
-        <CarCard 
-          key={car.id} 
-          car={car} 
-          onClick={() => openModal(car)} 
-        />
-      ))}
+      {cars.length === 0 ? (
+        <div className="col-span-full text-center py-10">
+          <p className="text-xl text-gray-500">Nenhum veículo encontrado</p>
+          <p className="text-gray-400 mt-2">Tente ajustar seus filtros ou busque novamente</p>
+        </div>
+      ) : (
+        cars.map((car) => (
+          <CarCard 
+            key={car.id} 
+            car={car} 
+            onClick={() => openModal(car)} 
+          />
+        ))
+      )}
       
       {selectedCar && (
         <CarModal 
