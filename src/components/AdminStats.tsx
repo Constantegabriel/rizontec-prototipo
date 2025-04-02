@@ -15,6 +15,8 @@ interface AdminStatsProps {
   onCarRestored: () => void;
 }
 
+type ActivityFilter = 'all' | 'added' | 'deleted' | 'edited' | 'restored';
+
 const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
   const [activityLog, setActivityLog] = useState<CarActivity[]>([]);
   const [expandedSections, setExpandedSections] = useState<{[key: string]: boolean}>({
@@ -26,6 +28,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<'7' | '15' | '30'>('7');
+  const [activityFilter, setActivityFilter] = useState<ActivityFilter>('all');
 
   // Load activity log from localStorage on component mount
   useEffect(() => {
@@ -122,6 +125,22 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
     setIsRestoreDialogOpen(true);
   };
 
+  // Filter activities based on current filter
+  const filterActivities = (activities: CarActivity[]) => {
+    if (activityFilter === 'all') return activities;
+    return activities.filter(activity => activity.action === activityFilter);
+  };
+
+  // Apply filter when clicking on stat cards
+  const handleStatCardClick = (filter: ActivityFilter) => {
+    setActivityFilter(filter);
+    // Open the total activities section if it's not already open
+    setExpandedSections(prev => ({
+      ...prev,
+      total: true
+    }));
+  };
+
   // Calculate statistics
   const totalCars = cars.length;
   const addedCars = activityLog.filter(log => log.action === 'added').length;
@@ -147,12 +166,19 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
   // Get recent activities based on selected period
   const recentActivities = getActivitiesByPeriod(parseInt(selectedPeriod));
 
+  // Get filtered activities for the total section
+  const filteredActivities = filterActivities(activityLog)
+    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+
   return (
     <div className="space-y-6">
       <h3 className="text-xl font-semibold mb-4">Estatísticas do Estoque</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
-        <Card>
+        <Card 
+          className={`cursor-pointer transition-all hover:shadow-md ${activityFilter === 'all' ? 'ring-2 ring-primary' : ''}`} 
+          onClick={() => handleStatCardClick('all')}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total no Estoque</CardTitle>
           </CardHeader>
@@ -164,7 +190,10 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card 
+          className={`cursor-pointer transition-all hover:shadow-md ${activityFilter === 'added' ? 'ring-2 ring-green-500' : ''}`}
+          onClick={() => handleStatCardClick('added')}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Adicionados</CardTitle>
           </CardHeader>
@@ -176,7 +205,10 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card 
+          className={`cursor-pointer transition-all hover:shadow-md ${activityFilter === 'deleted' ? 'ring-2 ring-red-500' : ''}`}
+          onClick={() => handleStatCardClick('deleted')}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Excluídos</CardTitle>
           </CardHeader>
@@ -188,7 +220,10 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card 
+          className={`cursor-pointer transition-all hover:shadow-md ${activityFilter === 'edited' ? 'ring-2 ring-blue-500' : ''}`}
+          onClick={() => handleStatCardClick('edited')}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Editados</CardTitle>
           </CardHeader>
@@ -200,7 +235,10 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card 
+          className={`cursor-pointer transition-all hover:shadow-md ${activityFilter === 'restored' ? 'ring-2 ring-amber-500' : ''}`}
+          onClick={() => handleStatCardClick('restored')}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Restaurados</CardTitle>
           </CardHeader>
@@ -219,7 +257,11 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
           onClick={() => toggleSection('total')}
         >
           <div className="flex justify-between items-center">
-            <CardTitle>Registro de Atividades</CardTitle>
+            <CardTitle>
+              {activityFilter === 'all' 
+                ? 'Registro de Atividades' 
+                : `Atividades: ${getActionText(activityFilter)}`}
+            </CardTitle>
             {expandedSections.total ? 
               <ChevronDown className="h-5 w-5" /> : 
               <ChevronRight className="h-5 w-5" />
@@ -228,31 +270,39 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
         </CardHeader>
         {expandedSections.total && (
           <CardContent className="pt-6">
-            {activityLog.length === 0 ? (
+            {filteredActivities.length === 0 ? (
               <p className="text-gray-500 text-center py-4">Nenhuma atividade registrada</p>
             ) : (
               <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
-                {activityLog
-                  .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-                  .slice(0, 10)
-                  .map((activity, index) => (
-                    <div 
-                      key={`${activity.id}-${index}`} 
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer"
-                      onClick={() => showActivityDetails(activity)}
-                    >
-                      <div className="flex items-center">
-                        {getActionIcon(activity.action)}
-                        <span className="ml-2">{activity.carName}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className={`mr-3 font-medium ${getActionColor(activity.action)}`}>
-                          {getActionText(activity.action)}
-                        </span>
-                        <span className="text-sm text-gray-500">{formatDate(activity.timestamp)}</span>
-                      </div>
+                {filteredActivities.slice(0, 20).map((activity, index) => (
+                  <div 
+                    key={`${activity.id}-${index}`} 
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer"
+                    onClick={() => showActivityDetails(activity)}
+                  >
+                    <div className="flex items-center">
+                      {getActionIcon(activity.action)}
+                      <span className="ml-2">{activity.carName}</span>
                     </div>
-                  ))}
+                    <div className="flex items-center">
+                      <span className={`mr-3 font-medium ${getActionColor(activity.action)}`}>
+                        {getActionText(activity.action)}
+                      </span>
+                      <span className="text-sm text-gray-500">{formatDate(activity.timestamp)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {activityFilter !== 'all' && (
+              <div className="mt-4 text-center">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setActivityFilter('all')}
+                >
+                  Mostrar Todas as Atividades
+                </Button>
               </div>
             )}
           </CardContent>

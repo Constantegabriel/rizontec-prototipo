@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -18,7 +17,6 @@ import CarEditModal from '@/components/CarEditModal';
 import AdminStats from '@/components/AdminStats';
 import { logCarActivity } from '@/utils/activityLogger';
 
-// Schema for car form validation
 const carSchema = z.object({
   name: z.string().min(1, 'Nome do carro é obrigatório'),
   price: z.coerce.number().min(1, 'Preço é obrigatório'),
@@ -46,7 +44,6 @@ const Admin: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'add' | 'list' | 'stats'>('add');
   
-  // Load cars from localStorage or use initial data
   useEffect(() => {
     const isAuthenticated = localStorage.getItem('isAuthenticated');
     
@@ -146,7 +143,6 @@ const Admin: React.FC = () => {
     setCars(updatedCars);
     localStorage.setItem('cars', JSON.stringify(updatedCars));
     
-    // Log the activity
     logCarActivity(newCar, 'added');
     
     form.reset();
@@ -167,7 +163,6 @@ const Admin: React.FC = () => {
     setCars(updatedCars);
     localStorage.setItem('cars', JSON.stringify(updatedCars));
     
-    // Log the activity
     logCarActivity(carToDelete, 'deleted');
     
     toast({
@@ -199,7 +194,6 @@ const Admin: React.FC = () => {
     setCars(updatedCars);
     localStorage.setItem('cars', JSON.stringify(updatedCars));
     
-    // Log the activity
     logCarActivity(updatedCar, 'edited');
     
     setIsEditModalOpen(false);
@@ -208,6 +202,18 @@ const Admin: React.FC = () => {
     toast({
       title: 'Carro atualizado',
       description: `${updatedCar.name} foi atualizado no estoque`,
+    });
+  };
+  
+  const handleCarRestored = () => {
+    const savedCars = localStorage.getItem('cars');
+    if (savedCars) {
+      setCars(JSON.parse(savedCars));
+    }
+    
+    toast({
+      title: 'Estoque atualizado',
+      description: 'Um veículo foi restaurado ao estoque',
     });
   };
   
@@ -537,7 +543,7 @@ const Admin: React.FC = () => {
         )}
         
         {activeTab === 'stats' && (
-          <AdminStats cars={cars} />
+          <AdminStats cars={cars} onCarRestored={handleCarRestored} />
         )}
       </main>
       
