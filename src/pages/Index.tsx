@@ -5,12 +5,13 @@ import SearchBar from '../components/SearchBar';
 import FilterMenu, { FilterOptions } from '../components/FilterMenu';
 import CarGrid from '../components/CarGrid';
 import Footer from '../components/Footer';
-import { cars as initialCars, Car } from '../data/cars';
+import { Car } from '../data/cars';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
+import { loadCars } from '@/services/carService';
+import { useQuery } from '@tanstack/react-query';
 
 const Index: React.FC = () => {
-  const [allCars, setAllCars] = useState<Car[]>([]);
   const [filteredCars, setFilteredCars] = useState<Car[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [filters, setFilters] = useState<FilterOptions>({
@@ -21,6 +22,12 @@ const Index: React.FC = () => {
     maxPrice: 0,
     transmission: null,
     maxMileage: null
+  });
+
+  // Fetch cars using React Query
+  const { data: allCars = [], isLoading, isError, refetch } = useQuery({
+    queryKey: ['cars'],
+    queryFn: loadCars
   });
 
   // Calculate min and max values for filters
@@ -39,53 +46,6 @@ const Index: React.FC = () => {
       brands
     };
   };
-
-  // Load cars from localStorage
-  const loadCars = () => {
-    try {
-      const savedCars = localStorage.getItem('cars');
-      if (savedCars) {
-        const parsedCars = JSON.parse(savedCars);
-        setAllCars(parsedCars);
-        setFilteredCars(parsedCars); // Show all cars by default
-        
-        // Initialize filter values based on data
-        const { minYear, maxYear, minPrice, maxPrice } = getMinMaxValues();
-        setFilters(prev => ({
-          ...prev,
-          minYear,
-          maxYear,
-          minPrice,
-          maxPrice
-        }));
-
-        console.log('Cars loaded from localStorage:', parsedCars.length);
-      } else {
-        // First time loading - save initial cars to localStorage
-        localStorage.setItem('cars', JSON.stringify(initialCars));
-        setAllCars(initialCars);
-        setFilteredCars(initialCars);
-        
-        console.log('Initial cars saved to localStorage:', initialCars.length);
-      }
-    } catch (error) {
-      console.error('Error loading cars:', error);
-      toast({
-        title: "Erro ao carregar veículos",
-        description: "Ocorreu um erro ao carregar os veículos. Por favor, atualize a página.",
-        variant: "destructive"
-      });
-      
-      // Fallback to initial cars
-      setAllCars(initialCars);
-      setFilteredCars(initialCars);
-    }
-  };
-
-  // Load cars on initial render
-  useEffect(() => {
-    loadCars();
-  }, []);
 
   // Apply search and filters together
   const applyFilters = () => {
@@ -135,6 +95,22 @@ const Index: React.FC = () => {
     setFilteredCars(results);
   };
 
+  // Initialize filters when cars are loaded
+  useEffect(() => {
+    if (allCars.length > 0) {
+      const { minYear, maxYear, minPrice, maxPrice } = getMinMaxValues();
+      setFilters(prev => ({
+        ...prev,
+        minYear,
+        maxYear,
+        minPrice,
+        maxPrice
+      }));
+      
+      setFilteredCars(allCars);
+    }
+  }, [allCars]);
+
   // Handle search
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -148,11 +124,11 @@ const Index: React.FC = () => {
   // Apply filters whenever search or filters change
   useEffect(() => {
     applyFilters();
-  }, [searchQuery, filters, allCars]);
+  }, [searchQuery, filters]);
   
   // Refresh handler to reload cars
   const handleRefresh = () => {
-    loadCars();
+    refetch();
     toast({
       title: "Lista atualizada",
       description: `${allCars.length} veículos carregados.`
@@ -200,13 +176,20 @@ const Index: React.FC = () => {
             
             <div className="mt-4 mb-2">
               <p className="text-gray-600">
-                {filteredCars.length === 0 
-                  ? "Nenhum veículo encontrado" 
-                  : `Mostrando ${filteredCars.length} veículo${filteredCars.length !== 1 ? 's' : ''}`}
+                {isLoading ? "Carregando..." : 
+                  filteredCars.length === 0 
+                    ? "Nenhum veículo encontrado" 
+                    : `Mostrando ${filteredCars.length} veículo${filteredCars.length !== 1 ? 's' : ''}`}
               </p>
             </div>
             
-            <CarGrid cars={filteredCars} />
+            {isError ? (
+              <div className="text-center my-8">
+                <p className="text-red-500">Erro ao carregar veículos. Tente novamente.</p>
+              </div>
+            ) : (
+              <CarGrid cars={filteredCars} />
+            )}
           </div>
         </div>
       </main>
