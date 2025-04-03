@@ -110,7 +110,7 @@ export const updateCar = async (car: Car): Promise<Car> => {
 };
 
 // Delete a car
-export const deleteCar = async (id: number): Promise<void> => {
+export const deleteCar = async (id: number | string): Promise<void> => {
   try {
     const { error } = await supabase
       .from('cars')
