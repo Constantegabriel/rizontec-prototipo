@@ -10,12 +10,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Car, cars as initialCars } from '@/data/cars';
+import { Car } from '@/data/cars';
 import { Trash2, LogOut, Upload, Edit, Plus } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import CarEditModal from '@/components/CarEditModal';
 import AdminStats from '@/components/AdminStats';
 import { logCarActivity } from '@/utils/activityLogger';
+import { loadCars, addCar, updateCar, deleteCar, uploadCarImages } from '@/services/carService';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const carSchema = z.object({
   name: z.string().min(1, 'Nome do carro é obrigatório'),
@@ -35,7 +37,6 @@ type CarFormValues = z.infer<typeof carSchema>;
 const Admin: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [cars, setCars] = useState<Car[]>([]);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [carFeatures, setCarFeatures] = useState<string[]>([]);
@@ -43,21 +44,18 @@ const Admin: React.FC = () => {
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'add' | 'list' | 'stats'>('add');
+  const queryClient = useQueryClient();
+  
+  const { data: cars = [], isLoading, refetch } = useQuery({
+    queryKey: ['cars'],
+    queryFn: loadCars
+  });
   
   useEffect(() => {
     const isAuthenticated = localStorage.getItem('isAuthenticated');
     
     if (!isAuthenticated || isAuthenticated !== 'true') {
       navigate('/login');
-      return;
-    }
-    
-    const savedCars = localStorage.getItem('cars');
-    if (savedCars) {
-      setCars(JSON.parse(savedCars));
-    } else {
-      setCars(initialCars);
-      localStorage.setItem('cars', JSON.stringify(initialCars));
     }
   }, [navigate]);
   
@@ -77,22 +75,26 @@ const Admin: React.FC = () => {
     },
   });
   
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
     
-    const newImages: string[] = [];
-    
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target?.result) {
-          newImages.push(e.target.result as string);
-          setUploadedImages(prev => [...prev, e.target!.result as string]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    try {
+      const imageUrls = await uploadCarImages(Array.from(files));
+      setUploadedImages(prev => [...prev, ...imageUrls]);
+      
+      toast({
+        title: 'Imagens enviadas',
+        description: `${imageUrls.length} imagens foram enviadas com sucesso.`,
+      });
+    } catch (error) {
+      console.error('Erro ao enviar imagens:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível enviar as imagens',
+        variant: 'destructive'
+      });
+    }
   };
   
   const triggerFileInput = () => {
@@ -114,7 +116,7 @@ const Admin: React.FC = () => {
     setCarFeatures(prev => prev.filter((_, i) => i !== index));
   };
   
-  const onSubmit = (values: CarFormValues) => {
+  const onSubmit = async (values: CarFormValues) => {
     if (uploadedImages.length === 0) {
       toast({
         title: "Erro",
@@ -139,36 +141,54 @@ const Admin: React.FC = () => {
       description: values.description || `${values.name} ${values.version} ${values.year}`,
     };
     
-    const updatedCars = [...cars, newCar];
-    setCars(updatedCars);
-    localStorage.setItem('cars', JSON.stringify(updatedCars));
-    
-    logCarActivity(newCar, 'added');
-    
-    form.reset();
-    setUploadedImages([]);
-    setCarFeatures([]);
-    
-    toast({
-      title: 'Carro adicionado',
-      description: `${values.name} foi adicionado ao estoque`,
-    });
+    try {
+      await addCar(newCar);
+      
+      queryClient.invalidateQueries({ queryKey: ['cars'] });
+      
+      logCarActivity(newCar, 'added');
+      
+      form.reset();
+      setUploadedImages([]);
+      setCarFeatures([]);
+      
+      toast({
+        title: 'Carro adicionado',
+        description: `${values.name} foi adicionado ao estoque`,
+      });
+    } catch (error) {
+      console.error('Erro ao adicionar carro:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível adicionar o veículo',
+        variant: 'destructive'
+      });
+    }
   };
   
-  const handleDeleteCar = (id: number) => {
+  const handleDeleteCar = async (id: number) => {
     const carToDelete = cars.find(car => car.id === id);
     if (!carToDelete) return;
     
-    const updatedCars = cars.filter(car => car.id !== id);
-    setCars(updatedCars);
-    localStorage.setItem('cars', JSON.stringify(updatedCars));
-    
-    logCarActivity(carToDelete, 'deleted');
-    
-    toast({
-      title: 'Carro removido',
-      description: 'O veículo foi removido do estoque',
-    });
+    try {
+      await deleteCar(id);
+      
+      queryClient.invalidateQueries({ queryKey: ['cars'] });
+      
+      logCarActivity(carToDelete, 'deleted');
+      
+      toast({
+        title: 'Carro removido',
+        description: 'O veículo foi removido do estoque',
+      });
+    } catch (error) {
+      console.error('Erro ao remover carro:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível remover o veículo',
+        variant: 'destructive'
+      });
+    }
   };
   
   const handleEditCar = (car: Car) => {
@@ -186,30 +206,33 @@ const Admin: React.FC = () => {
     });
   };
   
-  const handleCarUpdated = (updatedCar: Car) => {
-    const updatedCars = cars.map(car => 
-      car.id === updatedCar.id ? updatedCar : car
-    );
-    
-    setCars(updatedCars);
-    localStorage.setItem('cars', JSON.stringify(updatedCars));
-    
-    logCarActivity(updatedCar, 'edited');
-    
-    setIsEditModalOpen(false);
-    setSelectedCar(null);
-    
-    toast({
-      title: 'Carro atualizado',
-      description: `${updatedCar.name} foi atualizado no estoque`,
-    });
+  const handleCarUpdated = async (updatedCar: Car) => {
+    try {
+      await updateCar(updatedCar);
+      
+      queryClient.invalidateQueries({ queryKey: ['cars'] });
+      
+      logCarActivity(updatedCar, 'edited');
+      
+      setIsEditModalOpen(false);
+      setSelectedCar(null);
+      
+      toast({
+        title: 'Carro atualizado',
+        description: `${updatedCar.name} foi atualizado no estoque`,
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar carro:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível atualizar o veículo',
+        variant: 'destructive'
+      });
+    }
   };
   
   const handleCarRestored = () => {
-    const savedCars = localStorage.getItem('cars');
-    if (savedCars) {
-      setCars(JSON.parse(savedCars));
-    }
+    refetch();
     
     toast({
       title: 'Estoque atualizado',

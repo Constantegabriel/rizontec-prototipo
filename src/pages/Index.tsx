@@ -24,10 +24,12 @@ const Index: React.FC = () => {
     maxMileage: null
   });
 
-  // Fetch cars using React Query
+  // Fetch cars using React Query with refetch interval for automatic updates
   const { data: allCars = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['cars'],
-    queryFn: loadCars
+    queryFn: loadCars,
+    refetchInterval: 30000, // Recarregar a cada 30 segundos
+    refetchOnWindowFocus: true, // Recarregar quando a janela receber foco
   });
 
   // Calculate min and max values for filters
@@ -124,7 +126,7 @@ const Index: React.FC = () => {
   // Apply filters whenever search or filters change
   useEffect(() => {
     applyFilters();
-  }, [searchQuery, filters]);
+  }, [searchQuery, filters, allCars]);
   
   // Refresh handler to reload cars
   const handleRefresh = () => {
