@@ -43,18 +43,20 @@ const mapDbCarToCar = (dbCar: any): Car => {
 // Load all cars
 export const loadCars = async (): Promise<Car[]> => {
   try {
+    console.log('Carregando carros do Supabase...');
     const { data, error } = await supabase
       .from('cars')
       .select('*');
     
     if (error) {
-      console.error('Error loading cars:', error);
+      console.error('Erro ao carregar carros:', error);
       throw error;
     }
     
+    console.log('Carros carregados:', data?.length || 0);
     return data ? data.map(mapDbCarToCar) : [];
   } catch (error) {
-    console.error('Error loading cars:', error);
+    console.error('Erro ao carregar carros:', error);
     throw error;
   }
 };
@@ -62,6 +64,7 @@ export const loadCars = async (): Promise<Car[]> => {
 // Add a new car
 export const addCar = async (car: Car, userId?: string): Promise<Car> => {
   try {
+    console.log('Adicionando carro:', car.name);
     const newCar = mapCarToDbCar(car, userId);
     
     const { data, error } = await supabase
@@ -71,13 +74,14 @@ export const addCar = async (car: Car, userId?: string): Promise<Car> => {
       .single();
     
     if (error) {
-      console.error('Error adding car:', error);
+      console.error('Erro ao adicionar carro:', error);
       throw error;
     }
     
+    console.log('Carro adicionado com sucesso:', data.id);
     return mapDbCarToCar(data);
   } catch (error) {
-    console.error('Error adding car:', error);
+    console.error('Erro ao adicionar carro:', error);
     throw error;
   }
 };
@@ -85,6 +89,7 @@ export const addCar = async (car: Car, userId?: string): Promise<Car> => {
 // Update a car
 export const updateCar = async (car: Car): Promise<Car> => {
   try {
+    console.log('Atualizando carro:', car.id);
     const updatedCar = mapCarToDbCar(car);
     
     // Remove id from the update payload
@@ -98,13 +103,14 @@ export const updateCar = async (car: Car): Promise<Car> => {
       .single();
     
     if (error) {
-      console.error('Error updating car:', error);
+      console.error('Erro ao atualizar carro:', error);
       throw error;
     }
     
+    console.log('Carro atualizado com sucesso:', data.id);
     return mapDbCarToCar(data);
   } catch (error) {
-    console.error('Error updating car:', error);
+    console.error('Erro ao atualizar carro:', error);
     throw error;
   }
 };
@@ -112,17 +118,20 @@ export const updateCar = async (car: Car): Promise<Car> => {
 // Delete a car
 export const deleteCar = async (id: number | string): Promise<void> => {
   try {
+    console.log('Deletando carro:', id);
     const { error } = await supabase
       .from('cars')
       .delete()
       .eq('id', id.toString());
     
     if (error) {
-      console.error('Error deleting car:', error);
+      console.error('Erro ao deletar carro:', error);
       throw error;
     }
+    
+    console.log('Carro deletado com sucesso');
   } catch (error) {
-    console.error('Error deleting car:', error);
+    console.error('Erro ao deletar carro:', error);
     throw error;
   }
 };
@@ -130,6 +139,7 @@ export const deleteCar = async (id: number | string): Promise<void> => {
 // Upload car images
 export const uploadCarImages = async (files: File[]): Promise<string[]> => {
   try {
+    console.log(`Enviando ${files.length} imagens...`);
     const imageUrls: string[] = [];
     
     for (const file of files) {
@@ -137,12 +147,13 @@ export const uploadCarImages = async (files: File[]): Promise<string[]> => {
       const fileName = `${uuidv4()}.${fileExt}`;
       const filePath = `${fileName}`;
       
+      console.log(`Enviando arquivo: ${filePath}`);
       const { error: uploadError } = await supabase.storage
         .from('car-images')
         .upload(filePath, file);
       
       if (uploadError) {
-        console.error('Error uploading image:', uploadError);
+        console.error('Erro ao enviar imagem:', uploadError);
         throw uploadError;
       }
       
@@ -150,12 +161,13 @@ export const uploadCarImages = async (files: File[]): Promise<string[]> => {
         .from('car-images')
         .getPublicUrl(filePath);
       
+      console.log('URL da imagem:', data.publicUrl);
       imageUrls.push(data.publicUrl);
     }
     
     return imageUrls;
   } catch (error) {
-    console.error('Error uploading images:', error);
+    console.error('Erro ao enviar imagens:', error);
     throw error;
   }
 };
