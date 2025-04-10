@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Car } from '../data/cars';
 import CarCard from './CarCard';
 import CarModal from './CarModal';
+import { DEFAULT_CAR_IMAGE } from '@/services/carService';
 
 interface CarGridProps {
   cars: Car[];
@@ -13,6 +14,10 @@ const CarGrid: React.FC<CarGridProps> = ({ cars }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const openModal = (car: Car) => {
+    // Garantir que o carro tenha pelo menos uma imagem antes de abrir o modal
+    if (!car.images || car.images.length === 0) {
+      car.images = [DEFAULT_CAR_IMAGE];
+    }
     setSelectedCar(car);
     setIsModalOpen(true);
   };
@@ -32,7 +37,10 @@ const CarGrid: React.FC<CarGridProps> = ({ cars }) => {
         cars.map((car) => (
           <CarCard 
             key={car.id} 
-            car={car} 
+            car={{
+              ...car,
+              images: car.images && car.images.length > 0 ? car.images : [DEFAULT_CAR_IMAGE]
+            }} 
             onClick={() => openModal(car)} 
           />
         ))

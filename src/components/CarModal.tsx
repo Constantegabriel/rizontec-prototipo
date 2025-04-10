@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Car } from '../data/cars';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { DEFAULT_CAR_IMAGE } from '@/services/carService';
 
 interface CarModalProps {
   car: Car;
@@ -30,6 +31,9 @@ const CarModal: React.FC<CarModalProps> = ({ car, isOpen, onClose }) => {
     setCurrentImageIndex((prev) => (prev - 1 + car.images.length) % car.images.length);
   };
 
+  // Verificar se está usando imagem padrão
+  const isUsingDefaultImage = car.images.length === 1 && car.images[0] === DEFAULT_CAR_IMAGE;
+
   // Prepare WhatsApp message with car details
   const openWhatsApp = () => {
     const message = `Olá, estou interessado no veículo ${car.name} ${car.version} ${car.year} anunciado no site. Poderia me dar mais informações?`;
@@ -54,9 +58,13 @@ const CarModal: React.FC<CarModalProps> = ({ car, isOpen, onClose }) => {
               src={car.images[currentImageIndex]} 
               alt={`${car.name} - Imagem ${currentImageIndex + 1}`} 
               className="modal-image w-full h-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = DEFAULT_CAR_IMAGE;
+              }}
             />
             
-            {car.images.length > 1 && (
+            {!isUsingDefaultImage && car.images.length > 1 && (
               <>
                 <button 
                   onClick={prevImage} 

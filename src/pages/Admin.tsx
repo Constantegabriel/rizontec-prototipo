@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,13 +12,14 @@ import { useForm } from 'react-hook-form';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Car } from '@/data/cars';
-import { Trash2, LogOut, Upload, Edit, Plus } from 'lucide-react';
+import { Trash2, LogOut, Upload, Edit, Plus, ImageOff } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import CarEditModal from '@/components/CarEditModal';
 import AdminStats from '@/components/AdminStats';
 import { logCarActivity } from '@/utils/activityLogger';
-import { loadCars, addCar, updateCar, deleteCar, uploadCarImages } from '@/services/carService';
+import { loadCars, addCar, updateCar, deleteCar, uploadCarImages, DEFAULT_CAR_IMAGE } from '@/services/carService';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const carSchema = z.object({
   name: z.string().min(1, 'Nome do carro é obrigatório'),
@@ -44,6 +46,7 @@ const Admin: React.FC = () => {
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'add' | 'list' | 'stats'>('add');
+  const [useDefaultImage, setUseDefaultImage] = useState(false);
   const queryClient = useQueryClient();
   
   const { data: cars = [], isLoading, refetch } = useQuery({
@@ -79,19 +82,45 @@ const Admin: React.FC = () => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
     
+    // Se tínhamos ativado a imagem padrão, desative ao fazer upload
+    if (useDefaultImage) {
+      setUseDefaultImage(false);
+    }
+    
     try {
-      const imageUrls = await uploadCarImages(Array.from(files));
-      setUploadedImages(prev => [...prev, ...imageUrls]);
+      // Preview temporário das imagens (antes do upload ao servidor)
+      Array.from(files).forEach(file => {
+        // Verificar tamanho do arquivo
+        if (file.size > 5242880) { // 5MB
+          toast({
+            title: "Arquivo muito grande",
+            description: `O arquivo ${file.name} excede o limite de 5MB`,
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (e.target?.result) {
+            setUploadedImages(prev => [...prev, e.target!.result as string]);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+      
+      // Limpar input para permitir selecionar o mesmo arquivo novamente
+      event.target.value = '';
       
       toast({
-        title: 'Imagens enviadas',
-        description: `${imageUrls.length} imagens foram enviadas com sucesso.`,
+        title: 'Imagens adicionadas',
+        description: `As imagens serão enviadas quando o veículo for salvo.`,
       });
     } catch (error) {
-      console.error('Erro ao enviar imagens:', error);
+      console.error('Erro ao processar imagens:', error);
       toast({
         title: 'Erro',
-        description: 'Não foi possível enviar as imagens',
+        description: 'Não foi possível processar as imagens',
         variant: 'destructive'
       });
     }
@@ -117,13 +146,58 @@ const Admin: React.FC = () => {
   };
   
   const onSubmit = async (values: CarFormValues) => {
-    if (uploadedImages.length === 0) {
-      toast({
-        title: "Erro",
-        description: "Adicione pelo menos uma imagem do veículo",
-        variant: "destructive"
-      });
-      return;
+    let finalImages: string[] = [];
+    
+    // Se a opção de imagem padrão está ativada, use a imagem padrão
+    if (useDefaultImage) {
+      finalImages = [DEFAULT_CAR_IMAGE];
+    } else {
+      // Caso contrário, tente fazer upload das imagens selecionadas
+      if (uploadedImages.length > 0) {
+        try {
+          // Converter as imagens de base64 para Blob/File para upload
+          const filesToUpload: File[] = [];
+          for (const dataUrl of uploadedImages) {
+            // Ignorar a imagem padrão
+            if (dataUrl === DEFAULT_CAR_IMAGE) continue;
+            
+            // Converter de data URL para blob
+            try {
+              // Verificar se é uma dataURL ou URL já enviada
+              if (dataUrl.startsWith('data:')) {
+                const res = await fetch(dataUrl);
+                const blob = await res.blob();
+                const ext = dataUrl.split(';')[0].split('/')[1];
+                const file = new File([blob], `image-${Date.now()}.${ext}`, { type: blob.type });
+                filesToUpload.push(file);
+              } else {
+                // Se já é uma URL, adicione diretamente
+                finalImages.push(dataUrl);
+              }
+            } catch (e) {
+              console.error('Erro ao processar imagem:', e);
+              // Se falhar, ignore esta imagem
+            }
+          }
+          
+          // Se temos arquivos para upload, faça o upload
+          if (filesToUpload.length > 0) {
+            const uploadedUrls = await uploadCarImages(filesToUpload);
+            finalImages = [...finalImages, ...uploadedUrls];
+          }
+        } catch (error) {
+          console.error('Erro ao enviar imagens:', error);
+          toast({
+            title: 'Aviso',
+            description: 'Não foi possível enviar algumas imagens. Usando imagem padrão.',
+            variant: 'destructive'
+          });
+          finalImages = [DEFAULT_CAR_IMAGE];
+        }
+      } else {
+        // Se não há imagens, use a imagem padrão
+        finalImages = [DEFAULT_CAR_IMAGE];
+      }
     }
     
     const newCar: Car = {
@@ -136,7 +210,7 @@ const Admin: React.FC = () => {
       mileage: values.mileage,
       transmission: values.transmission,
       fuel: values.fuel,
-      images: uploadedImages,
+      images: finalImages,
       features: carFeatures,
       description: values.description || `${values.name} ${values.version} ${values.year}`,
     };
@@ -151,6 +225,7 @@ const Admin: React.FC = () => {
       form.reset();
       setUploadedImages([]);
       setCarFeatures([]);
+      setUseDefaultImage(false);
       
       toast({
         title: 'Carro adicionado',
@@ -464,48 +539,73 @@ const Admin: React.FC = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium">Imagens do Veículo</label>
-                    
-                    <div className="flex flex-wrap gap-2">
-                      {uploadedImages.map((img, index) => (
-                        <div key={index} className="relative w-20 h-20">
-                          <img 
-                            src={img} 
-                            alt={`Preview ${index+1}`} 
-                            className="w-full h-full object-cover rounded-md"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      ))}
-                      
-                      <button
-                        type="button"
-                        onClick={triggerFileInput}
-                        className="w-20 h-20 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-md hover:border-primary transition-colors"
-                      >
-                        <Upload size={20} className="mb-1 text-gray-500" />
-                        <span className="text-xs text-gray-500">Adicionar</span>
-                      </button>
+                    <div className="flex justify-between items-center">
+                      <label className="block text-sm font-medium">Imagens do Veículo</label>
+                      <div className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          id="useDefaultImage" 
+                          checked={useDefaultImage} 
+                          onChange={() => setUseDefaultImage(prev => !prev)}
+                          className="mr-2"
+                        />
+                        <label htmlFor="useDefaultImage" className="text-sm text-gray-600">
+                          Usar imagem genérica
+                        </label>
+                      </div>
                     </div>
                     
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                    
-                    <p className="text-xs text-gray-500">
-                      Adicione pelo menos uma imagem do veículo
-                    </p>
+                    {useDefaultImage ? (
+                      <div className="flex justify-center items-center p-4 border rounded-md">
+                        <div className="flex flex-col items-center">
+                          <ImageOff size={64} className="text-gray-400 mb-2" />
+                          <p className="text-gray-500">Será usada uma imagem genérica</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex flex-wrap gap-2">
+                          {uploadedImages.map((img, index) => (
+                            <div key={index} className="relative w-20 h-20">
+                              <img 
+                                src={img} 
+                                alt={`Preview ${index+1}`} 
+                                className="w-full h-full object-cover rounded-md"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = DEFAULT_CAR_IMAGE;
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeImage(index)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          ))}
+                          
+                          <button
+                            type="button"
+                            onClick={triggerFileInput}
+                            className="w-20 h-20 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-md hover:border-primary transition-colors"
+                          >
+                            <Upload size={20} className="mb-1 text-gray-500" />
+                            <span className="text-xs text-gray-500">Adicionar</span>
+                          </button>
+                        </div>
+                        
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handleFileUpload}
+                          className="hidden"
+                        />
+                      </>
+                    )}
                   </div>
                   
                   <Button type="submit" className="w-full">Adicionar Veículo</Button>
@@ -531,7 +631,7 @@ const Admin: React.FC = () => {
                       className="w-20 h-20 object-cover rounded"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = 'https://placehold.co/80x80?text=Sem+Imagem';
+                        target.src = DEFAULT_CAR_IMAGE;
                       }}
                     />
                     <div className="flex-grow">

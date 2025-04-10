@@ -11,7 +11,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { X, Trash2, Upload, Plus } from 'lucide-react';
+import { X, Trash2, Upload, Plus, ImageOff } from 'lucide-react';
+import { DEFAULT_CAR_IMAGE } from '@/services/carService';
+import { useToast } from '@/components/ui/use-toast';
 
 // Schema for car form validation
 const carSchema = z.object({
@@ -41,7 +43,11 @@ const CarEditModal: React.FC<CarEditModalProps> = ({
   const [images, setImages] = useState<string[]>([...car.images]);
   const [features, setFeatures] = useState<string[]>([...car.features]);
   const [featureInput, setFeatureInput] = useState<string>('');
+  const [useDefaultImage, setUseDefaultImage] = useState<boolean>(
+    car.images.length === 1 && car.images[0] === DEFAULT_CAR_IMAGE
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const form = useForm<CarFormValues>({
     resolver: zodResolver(carSchema),
@@ -73,13 +79,29 @@ const CarEditModal: React.FC<CarEditModalProps> = ({
     });
     setImages([...car.images]);
     setFeatures([...car.features]);
+    setUseDefaultImage(car.images.length === 1 && car.images[0] === DEFAULT_CAR_IMAGE);
   }, [car, form]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
     
+    // Se estava usando imagem padrão, desabilite a opção
+    if (useDefaultImage) {
+      setUseDefaultImage(false);
+    }
+    
     Array.from(files).forEach(file => {
+      // Verificar tamanho do arquivo
+      if (file.size > 5242880) { // 5MB
+        toast({
+          title: "Arquivo muito grande",
+          description: `O arquivo ${file.name} excede o limite de 5MB`,
+          variant: "destructive"
+        });
+        return;
+      }
+      
       const reader = new FileReader();
       reader.onload = (e) => {
         if (e.target?.result) {
@@ -112,10 +134,28 @@ const CarEditModal: React.FC<CarEditModalProps> = ({
     setFeatures(prev => prev.filter((_, i) => i !== index));
   };
 
+  const toggleDefaultImage = () => {
+    if (useDefaultImage) {
+      // Se estávamos usando a imagem padrão e agora não estamos mais
+      setUseDefaultImage(false);
+      // Se não tínhamos imagens personalizadas, deixe a lista vazia
+      if (images.length === 1 && images[0] === DEFAULT_CAR_IMAGE) {
+        setImages([]);
+      }
+    } else {
+      // Se não estávamos usando a imagem padrão e agora estamos
+      setUseDefaultImage(true);
+      setImages([DEFAULT_CAR_IMAGE]);
+    }
+  };
+
   const onSubmit = (values: CarFormValues) => {
-    if (images.length === 0) {
-      alert("Adicione pelo menos uma imagem do veículo");
-      return;
+    // Se não tem imagens e não está usando a imagem padrão, use a imagem padrão
+    let finalImages = images;
+    if ((finalImages.length === 0 || (finalImages.length === 1 && finalImages[0] === DEFAULT_CAR_IMAGE)) && !useDefaultImage) {
+      finalImages = [];
+    } else if (useDefaultImage) {
+      finalImages = [DEFAULT_CAR_IMAGE];
     }
     
     const updatedCar: Car = {
@@ -129,7 +169,7 @@ const CarEditModal: React.FC<CarEditModalProps> = ({
       transmission: values.transmission,
       fuel: values.fuel,
       description: values.description || `${values.name} ${values.version} ${values.year}`,
-      images: images,
+      images: finalImages,
       features: features,
     };
     
@@ -314,48 +354,73 @@ const CarEditModal: React.FC<CarEditModalProps> = ({
             </div>
             
             <div className="space-y-2">
-              <label className="block text-sm font-medium">Imagens do Veículo</label>
-              
-              <div className="flex flex-wrap gap-2">
-                {images.map((img, index) => (
-                  <div key={index} className="relative w-20 h-20">
-                    <img 
-                      src={img} 
-                      alt={`Preview ${index+1}`} 
-                      className="w-full h-full object-cover rounded-md"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))}
-                
-                <button
-                  type="button"
-                  onClick={triggerFileInput}
-                  className="w-20 h-20 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-md hover:border-primary transition-colors"
-                >
-                  <Upload size={20} className="mb-1 text-gray-500" />
-                  <span className="text-xs text-gray-500">Adicionar</span>
-                </button>
+              <div className="flex justify-between items-center">
+                <label className="block text-sm font-medium">Imagens do Veículo</label>
+                <div className="flex items-center">
+                  <input 
+                    type="checkbox" 
+                    id="useDefaultImage" 
+                    checked={useDefaultImage} 
+                    onChange={toggleDefaultImage}
+                    className="mr-2"
+                  />
+                  <label htmlFor="useDefaultImage" className="text-sm text-gray-600">
+                    Usar imagem genérica
+                  </label>
+                </div>
               </div>
               
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-              
-              <p className="text-xs text-gray-500">
-                Adicione pelo menos uma imagem do veículo
-              </p>
+              {useDefaultImage ? (
+                <div className="flex justify-center items-center p-4 border rounded-md">
+                  <div className="flex flex-col items-center">
+                    <ImageOff size={64} className="text-gray-400 mb-2" />
+                    <p className="text-gray-500">Será usada uma imagem genérica</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex flex-wrap gap-2">
+                    {images.map((img, index) => (
+                      <div key={index} className="relative w-20 h-20">
+                        <img 
+                          src={img} 
+                          alt={`Preview ${index+1}`} 
+                          className="w-full h-full object-cover rounded-md"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = DEFAULT_CAR_IMAGE;
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    
+                    <button
+                      type="button"
+                      onClick={triggerFileInput}
+                      className="w-20 h-20 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-md hover:border-primary transition-colors"
+                    >
+                      <Upload size={20} className="mb-1 text-gray-500" />
+                      <span className="text-xs text-gray-500">Adicionar</span>
+                    </button>
+                  </div>
+                  
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                </>
+              )}
             </div>
             
             <DialogFooter>
