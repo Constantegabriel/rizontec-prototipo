@@ -142,7 +142,7 @@ export const deleteCar = async (id: number | string): Promise<void> => {
 // Upload car images
 export const uploadCarImages = async (files: File[]): Promise<string[]> => {
   try {
-    console.log(`Enviando ${files.length} imagens...`);
+    console.log(`Iniciando upload de ${files.length} imagens...`);
     const imageUrls: string[] = [];
     
     for (const file of files) {
@@ -150,24 +150,49 @@ export const uploadCarImages = async (files: File[]): Promise<string[]> => {
       const fileName = `${uuidv4()}.${fileExt}`;
       const filePath = `${fileName}`;
       
-      console.log(`Enviando arquivo: ${filePath}`);
+      console.log(`Enviando arquivo: ${filePath} para o bucket car-images`);
+      
+      // Verificar se o bucket existe antes de fazer upload
+      const { data: buckets, error: bucketsError } = await supabase
+        .storage
+        .listBuckets();
+      
+      if (bucketsError) {
+        console.error('Erro ao listar buckets:', bucketsError);
+        throw bucketsError;
+      }
+      
+      const bucketExists = buckets.some(bucket => bucket.name === 'car-images');
+      console.log('Bucket car-images existe?', bucketExists);
+      
+      if (!bucketExists) {
+        console.error('Bucket car-images não existe');
+        throw new Error('Bucket car-images não existe');
+      }
+      
+      // Fazer upload do arquivo
       const { error: uploadError } = await supabase.storage
         .from('car-images')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
       
       if (uploadError) {
         console.error('Erro ao enviar imagem:', uploadError);
         throw uploadError;
       }
       
+      // Obter URL pública da imagem
       const { data } = supabase.storage
         .from('car-images')
         .getPublicUrl(filePath);
       
-      console.log('URL da imagem:', data.publicUrl);
+      console.log('URL da imagem obtida:', data.publicUrl);
       imageUrls.push(data.publicUrl);
     }
     
+    console.log(`${imageUrls.length} imagens enviadas com sucesso`);
     return imageUrls;
   } catch (error) {
     console.error('Erro ao enviar imagens:', error);
