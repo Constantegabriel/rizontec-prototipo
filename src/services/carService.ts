@@ -139,11 +139,23 @@ export const deleteCar = async (id: number | string): Promise<void> => {
   }
 };
 
-// Upload car images
+// Upload car images - Simplified and more robust implementation
 export const uploadCarImages = async (files: File[]): Promise<string[]> => {
   try {
     console.log(`Iniciando upload de ${files.length} imagens...`);
     const imageUrls: string[] = [];
+    
+    // Tentar criar bucket caso não exista (não falharemos se ele já existir)
+    try {
+      await supabase.storage.createBucket('car-images', {
+        public: true,
+        fileSizeLimit: 5242880, // 5MB
+      });
+      console.log('Bucket car-images criado ou já existente');
+    } catch (bucketError) {
+      console.log('Bucket car-images já existe ou erro ao criar:', bucketError);
+      // Continuar mesmo se houver erro (provavelmente o bucket já existe)
+    }
     
     for (const file of files) {
       const fileExt = file.name.split('.').pop();
@@ -152,26 +164,8 @@ export const uploadCarImages = async (files: File[]): Promise<string[]> => {
       
       console.log(`Enviando arquivo: ${filePath} para o bucket car-images`);
       
-      // Verificar se o bucket existe antes de fazer upload
-      const { data: buckets, error: bucketsError } = await supabase
-        .storage
-        .listBuckets();
-      
-      if (bucketsError) {
-        console.error('Erro ao listar buckets:', bucketsError);
-        throw bucketsError;
-      }
-      
-      const bucketExists = buckets.some(bucket => bucket.name === 'car-images');
-      console.log('Bucket car-images existe?', bucketExists);
-      
-      if (!bucketExists) {
-        console.error('Bucket car-images não existe');
-        throw new Error('Bucket car-images não existe');
-      }
-      
-      // Fazer upload do arquivo
-      const { error: uploadError } = await supabase.storage
+      // Fazer upload do arquivo diretamente sem verificar existência do bucket
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('car-images')
         .upload(filePath, file, {
           cacheControl: '3600',
@@ -182,6 +176,8 @@ export const uploadCarImages = async (files: File[]): Promise<string[]> => {
         console.error('Erro ao enviar imagem:', uploadError);
         throw uploadError;
       }
+      
+      console.log('Upload realizado com sucesso:', uploadData);
       
       // Obter URL pública da imagem
       const { data } = supabase.storage
