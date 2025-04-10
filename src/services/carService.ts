@@ -54,6 +54,9 @@ export const loadCars = async (): Promise<Car[]> => {
     }
     
     console.log('Carros carregados:', data?.length || 0);
+    if (data && data.length > 0) {
+      console.log('Primeiro carro:', data[0]);
+    }
     return data ? data.map(mapDbCarToCar) : [];
   } catch (error) {
     console.error('Erro ao carregar carros:', error);

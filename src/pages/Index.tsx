@@ -28,8 +28,9 @@ const Index: React.FC = () => {
   const { data: allCars = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['cars'],
     queryFn: loadCars,
-    refetchInterval: 30000, // Recarregar a cada 30 segundos
+    refetchInterval: 10000, // Recarregar a cada 10 segundos
     refetchOnWindowFocus: true, // Recarregar quando a janela receber foco
+    staleTime: 5000, // Considerar dados atuais por 5 segundos
   });
 
   // Calculate min and max values for filters
@@ -51,6 +52,7 @@ const Index: React.FC = () => {
 
   // Apply search and filters together
   const applyFilters = () => {
+    console.log('Aplicando filtros em', allCars.length, 'carros');
     let results = allCars;
     
     // Apply search query if exists
@@ -94,12 +96,14 @@ const Index: React.FC = () => {
       );
     }
     
+    console.log('Após filtros:', results.length, 'carros');
     setFilteredCars(results);
   };
 
   // Initialize filters when cars are loaded
   useEffect(() => {
     if (allCars.length > 0) {
+      console.log('Carros carregados na página inicial:', allCars.length);
       const { minYear, maxYear, minPrice, maxPrice } = getMinMaxValues();
       setFilters(prev => ({
         ...prev,
@@ -110,6 +114,8 @@ const Index: React.FC = () => {
       }));
       
       setFilteredCars(allCars);
+    } else {
+      console.log('Nenhum carro carregado na página inicial');
     }
   }, [allCars]);
 
