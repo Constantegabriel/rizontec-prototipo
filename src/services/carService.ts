@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Car } from "@/data/cars";
 import { v4 as uuidv4 } from 'uuid';
+import { toast } from "@/components/ui/use-toast";
 
 // URL da imagem genérica para usar quando não houver imagens
 export const DEFAULT_CAR_IMAGE = "https://www.svgrepo.com/show/508699/car.svg";
@@ -181,6 +182,7 @@ export const uploadCarImages = async (files: File[]): Promise<string[]> => {
       // Verificar se o arquivo é muito grande
       if (file.size > 5242880) { // 5MB em bytes
         console.error('Arquivo muito grande:', file.name, file.size);
+        // Uso do toast importado corretamente
         toast({
           title: 'Arquivo muito grande',
           description: `O arquivo ${file.name} excede o limite de 5MB`,
@@ -241,3 +243,4 @@ export const uploadCarImages = async (files: File[]): Promise<string[]> => {
     return [DEFAULT_CAR_IMAGE]; // Em caso de erro, use a imagem padrão
   }
 };
+
