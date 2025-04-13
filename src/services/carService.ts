@@ -1,71 +1,44 @@
 
-import { supabase } from "@/integrations/supabase/client";
 import { Car } from "@/data/cars";
-import { v4 as uuidv4 } from 'uuid';
 import { toast } from "@/components/ui/use-toast";
 
 // URL da imagem genérica para usar quando não houver imagens
 export const DEFAULT_CAR_IMAGE = "https://www.svgrepo.com/show/508699/car.svg";
 
-// Convert local Car type to Supabase database type
-const mapCarToDbCar = (car: Car, userId?: string): any => {
-  return {
-    id: uuidv4(), // Always generate a UUID for new cars, don't use the timestamp
-    name: car.name,
-    price: car.price,
-    year: car.year,
-    version: car.version,
-    color: car.color,
-    mileage: car.mileage,
-    transmission: car.transmission,
-    fuel: car.fuel,
-    description: car.description || '',
-    features: car.features || [],
-    images: car.images && car.images.length > 0 ? car.images : [DEFAULT_CAR_IMAGE],
-    user_id: userId
-  };
+// Local storage keys
+const CARS_STORAGE_KEY = "cars_local_storage";
+
+// Helper to load cars from localStorage
+const getLocalCars = (): Car[] => {
+  try {
+    const storedCars = localStorage.getItem(CARS_STORAGE_KEY);
+    return storedCars ? JSON.parse(storedCars) : [];
+  } catch (error) {
+    console.error('Erro ao carregar carros do localStorage:', error);
+    return [];
+  }
 };
 
-// Convert Supabase database type to local Car type
-const mapDbCarToCar = (dbCar: any): Car => {
-  // Garantir que sempre há pelo menos uma imagem
-  const images = dbCar.images && dbCar.images.length > 0 ? 
-    dbCar.images : [DEFAULT_CAR_IMAGE];
-  
-  return {
-    id: parseInt(dbCar.id) || Date.now(), // Maintain backward compatibility
-    name: dbCar.name,
-    price: dbCar.price,
-    year: dbCar.year,
-    version: dbCar.version,
-    color: dbCar.color,
-    mileage: dbCar.mileage,
-    transmission: dbCar.transmission,
-    fuel: dbCar.fuel,
-    description: dbCar.description || '',
-    features: dbCar.features || [],
-    images: images
-  };
+// Helper to save cars to localStorage
+const saveLocalCars = (cars: Car[]): void => {
+  try {
+    localStorage.setItem(CARS_STORAGE_KEY, JSON.stringify(cars));
+  } catch (error) {
+    console.error('Erro ao salvar carros no localStorage:', error);
+  }
 };
 
 // Load all cars
 export const loadCars = async (): Promise<Car[]> => {
   try {
-    console.log('Carregando carros do Supabase...');
-    const { data, error } = await supabase
-      .from('cars')
-      .select('*');
+    console.log('Carregando carros do armazenamento local...');
+    const localCars = getLocalCars();
     
-    if (error) {
-      console.error('Erro ao carregar carros:', error);
-      throw error;
+    console.log('Carros carregados:', localCars.length || 0);
+    if (localCars && localCars.length > 0) {
+      console.log('Primeiro carro:', localCars[0]);
     }
-    
-    console.log('Carros carregados:', data?.length || 0);
-    if (data && data.length > 0) {
-      console.log('Primeiro carro:', data[0]);
-    }
-    return data ? data.map(mapDbCarToCar) : [];
+    return localCars;
   } catch (error) {
     console.error('Erro ao carregar carros:', error);
     throw error;
@@ -76,31 +49,22 @@ export const loadCars = async (): Promise<Car[]> => {
 export const addCar = async (car: Car, userId?: string): Promise<Car> => {
   try {
     console.log('Adicionando carro:', car.name);
-    const newCar = mapCarToDbCar(car, userId);
     
-    // Log the mapped car to check UUID format
-    console.log('Carro mapeado para inserção:', newCar);
+    // Get current cars
+    const currentCars = getLocalCars();
     
-    const { data, error } = await supabase
-      .from('cars')
-      .insert(newCar)
-      .select()
-      .single();
+    // Create new car with a unique ID
+    const newCar: Car = {
+      ...car,
+      id: Date.now(), // Use timestamp as unique ID
+      images: car.images && car.images.length > 0 ? car.images : [DEFAULT_CAR_IMAGE]
+    };
     
-    if (error) {
-      console.error('Erro ao adicionar carro:', error);
-      
-      // Display a user-friendly error message
-      toast({
-        title: 'Erro ao adicionar veículo',
-        description: 'Não foi possível adicionar o veículo ao estoque. Tente novamente.',
-        variant: 'destructive'
-      });
-      
-      throw error;
-    }
+    // Add to array and save to localStorage
+    currentCars.push(newCar);
+    saveLocalCars(currentCars);
     
-    console.log('Carro adicionado com sucesso:', data.id);
+    console.log('Carro adicionado com sucesso:', newCar.id);
     
     // Display success message
     toast({
@@ -109,9 +73,17 @@ export const addCar = async (car: Car, userId?: string): Promise<Car> => {
       variant: 'default'
     });
     
-    return mapDbCarToCar(data);
+    return newCar;
   } catch (error) {
     console.error('Erro ao adicionar carro:', error);
+    
+    // Display a user-friendly error message
+    toast({
+      title: 'Erro ao adicionar veículo',
+      description: 'Não foi possível adicionar o veículo ao estoque. Tente novamente.',
+      variant: 'destructive'
+    });
+    
     throw error;
   }
 };
@@ -120,35 +92,38 @@ export const addCar = async (car: Car, userId?: string): Promise<Car> => {
 export const updateCar = async (car: Car): Promise<Car> => {
   try {
     console.log('Atualizando carro:', car.id);
-    const updatedCar = mapCarToDbCar(car);
     
-    // Remove id from the update payload
-    const { id, ...updatePayload } = updatedCar;
+    // Get current cars
+    const currentCars = getLocalCars();
     
-    const { data, error } = await supabase
-      .from('cars')
-      .update(updatePayload)
-      .eq('id', id)
-      .select()
-      .single();
+    // Find index of car to update
+    const index = currentCars.findIndex(c => c.id === car.id);
     
-    if (error) {
-      console.error('Erro ao atualizar carro:', error);
-      
-      // Display a user-friendly error message
-      toast({
-        title: 'Erro ao atualizar veículo',
-        description: 'Não foi possível atualizar o veículo. Tente novamente.',
-        variant: 'destructive'
-      });
-      
-      throw error;
+    if (index === -1) {
+      throw new Error('Carro não encontrado');
     }
     
-    console.log('Carro atualizado com sucesso:', data.id);
-    return mapDbCarToCar(data);
+    // Update car
+    currentCars[index] = {
+      ...car,
+      images: car.images && car.images.length > 0 ? car.images : [DEFAULT_CAR_IMAGE]
+    };
+    
+    // Save to localStorage
+    saveLocalCars(currentCars);
+    
+    console.log('Carro atualizado com sucesso:', car.id);
+    return car;
   } catch (error) {
     console.error('Erro ao atualizar carro:', error);
+    
+    // Display a user-friendly error message
+    toast({
+      title: 'Erro ao atualizar veículo',
+      description: 'Não foi possível atualizar o veículo. Tente novamente.',
+      variant: 'destructive'
+    });
+    
     throw error;
   }
 };
@@ -157,23 +132,15 @@ export const updateCar = async (car: Car): Promise<Car> => {
 export const deleteCar = async (id: number | string): Promise<void> => {
   try {
     console.log('Deletando carro:', id);
-    const { error } = await supabase
-      .from('cars')
-      .delete()
-      .eq('id', id.toString());
     
-    if (error) {
-      console.error('Erro ao deletar carro:', error);
-      
-      // Display a user-friendly error message
-      toast({
-        title: 'Erro ao remover veículo',
-        description: 'Não foi possível remover o veículo do estoque. Tente novamente.',
-        variant: 'destructive'
-      });
-      
-      throw error;
-    }
+    // Get current cars
+    const currentCars = getLocalCars();
+    
+    // Filter out car to delete
+    const updatedCars = currentCars.filter(c => c.id !== id);
+    
+    // Save to localStorage
+    saveLocalCars(updatedCars);
     
     console.log('Carro deletado com sucesso');
     
@@ -185,28 +152,36 @@ export const deleteCar = async (id: number | string): Promise<void> => {
     });
   } catch (error) {
     console.error('Erro ao deletar carro:', error);
+    
+    // Display a user-friendly error message
+    toast({
+      title: 'Erro ao remover veículo',
+      description: 'Não foi possível remover o veículo do estoque. Tente novamente.',
+      variant: 'destructive'
+    });
+    
     throw error;
   }
 };
 
-// Upload car images - Improved implementation with new storage bucket
+// Upload car images - Local implementation that returns image URLs
 export const uploadCarImages = async (files: File[]): Promise<string[]> => {
   try {
-    console.log(`Iniciando upload de ${files.length} imagens...`);
+    console.log(`Processando ${files.length} imagens...`);
     
-    // Se não há arquivos para enviar, retorne a imagem padrão
+    // Se não há arquivos para processar, retorne a imagem padrão
     if (!files || files.length === 0) {
-      console.log('Nenhum arquivo para enviar, usando imagem padrão');
+      console.log('Nenhum arquivo para processar, usando imagem padrão');
       return [DEFAULT_CAR_IMAGE];
     }
     
     const imageUrls: string[] = [];
     
+    // Processamento local - converter arquivos para URLs de dados
     for (const file of files) {
       // Verificar se o arquivo é muito grande
       if (file.size > 5242880) { // 5MB em bytes
         console.error('Arquivo muito grande:', file.name, file.size);
-        // Uso do toast importado corretamente
         toast({
           title: 'Arquivo muito grande',
           description: `O arquivo ${file.name} excede o limite de 5MB`,
@@ -215,49 +190,25 @@ export const uploadCarImages = async (files: File[]): Promise<string[]> => {
         continue; // Pular este arquivo e ir para o próximo
       }
       
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${uuidv4()}.${fileExt}`;
-      const filePath = `${fileName}`;
-      
-      console.log(`Enviando arquivo: ${filePath} para o bucket car-images`);
-      
-      // Upload do arquivo para o bucket 'car-images'
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('car-images')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
-      
-      if (uploadError) {
-        console.error('Erro ao enviar imagem:', uploadError);
-        continue; // Tentar o próximo arquivo
-      }
-      
-      console.log('Upload realizado com sucesso:', uploadData);
-      
-      // Obter URL pública da imagem
-      const { data } = supabase.storage
-        .from('car-images')
-        .getPublicUrl(filePath);
-      
-      console.log('URL da imagem obtida:', data.publicUrl);
-      imageUrls.push(data.publicUrl);
+      // Criar uma URL para o arquivo
+      const fileURL = URL.createObjectURL(file);
+      console.log('URL criada para o arquivo:', fileURL);
+      imageUrls.push(fileURL);
     }
     
-    // Se após os uploads ainda não temos imagens, use a imagem padrão
+    // Se após os processamentos ainda não temos imagens, use a imagem padrão
     if (imageUrls.length === 0) {
-      console.log('Nenhuma imagem foi enviada com sucesso, usando imagem padrão');
+      console.log('Nenhuma imagem foi processada com sucesso, usando imagem padrão');
       return [DEFAULT_CAR_IMAGE];
     }
     
-    console.log(`${imageUrls.length} imagens enviadas com sucesso`);
+    console.log(`${imageUrls.length} imagens processadas com sucesso`);
     return imageUrls;
   } catch (error) {
-    console.error('Erro ao enviar imagens:', error);
+    console.error('Erro ao processar imagens:', error);
     toast({
-      title: 'Erro no upload',
-      description: 'Não foi possível enviar as imagens. Será usada uma imagem genérica.',
+      title: 'Erro no processamento',
+      description: 'Não foi possível processar as imagens. Será usada uma imagem genérica.',
       variant: 'destructive'
     });
     return [DEFAULT_CAR_IMAGE]; // Em caso de erro, use a imagem padrão

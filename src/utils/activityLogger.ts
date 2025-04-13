@@ -1,100 +1,92 @@
 
 import { Car } from '@/data/cars';
 
-export type CarActivity = {
-  id: number;
+// Activity log storage key
+const ACTIVITY_LOG_KEY = 'carActivityLog';
+
+export interface CarActivity {
+  id: string | number;
   carName: string;
   action: 'added' | 'deleted' | 'edited' | 'restored';
   timestamp: Date;
-  carData?: Car; // Armazenar dados do carro para restauração
-};
+  carData?: Car;  // Full car data for restore functionality
+}
 
-export const logCarActivity = (car: Car, action: 'added' | 'deleted' | 'edited' | 'restored') => {
-  // Get existing log
-  const existingLogStr = localStorage.getItem('carActivityLog');
-  let activityLog: CarActivity[] = [];
-  
-  if (existingLogStr) {
-    try {
-      // Parse existing log, converting string dates back to Date objects
-      activityLog = JSON.parse(existingLogStr, (key, value) => {
+// Log car activity
+export const logCarActivity = (car: Car, action: 'added' | 'deleted' | 'edited' | 'restored'): void => {
+  try {
+    // Get existing log
+    const savedLog = localStorage.getItem(ACTIVITY_LOG_KEY);
+    let activityLog: CarActivity[] = [];
+    
+    if (savedLog) {
+      // Parse the saved log, converting string dates back to Date objects
+      activityLog = JSON.parse(savedLog, (key, value) => {
         if (key === 'timestamp') return new Date(value);
         return value;
       });
-    } catch (error) {
-      console.error('Error parsing activity log:', error);
-      activityLog = [];
     }
+    
+    // Add new activity
+    const activity: CarActivity = {
+      id: car.id,
+      carName: `${car.name} ${car.version}`,
+      action,
+      timestamp: new Date(),
+      carData: action === 'deleted' ? {...car} : undefined
+    };
+    
+    activityLog.push(activity);
+    
+    // Save back to localStorage
+    localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(activityLog));
+    
+    console.log(`Activity logged: ${action} - ${car.name}`);
+  } catch (error) {
+    console.error('Error logging activity:', error);
   }
-  
-  // Add new activity
-  const newActivity: CarActivity = {
-    id: car.id,
-    carName: `${car.name} ${car.version}`,
-    action,
-    timestamp: new Date()
-  };
-
-  // Se o carro estiver sendo excluído, armazenar uma cópia para possível restauração
-  if (action === 'deleted') {
-    newActivity.carData = { ...car };
-  }
-  
-  activityLog.push(newActivity);
-  
-  // Save back to localStorage
-  localStorage.setItem('carActivityLog', JSON.stringify(activityLog));
-  
-  return newActivity;
 };
 
-// Função para restaurar um carro excluído
-export const restoreDeletedCar = (activityId: number) => {
-  const existingLogStr = localStorage.getItem('carActivityLog');
-  if (!existingLogStr) return null;
-  
+// Restore a deleted car
+export const restoreDeletedCar = (id: string | number): Car | null => {
   try {
-    // Parse existing log
-    const activityLog: CarActivity[] = JSON.parse(existingLogStr, (key, value) => {
+    // Get activity log
+    const savedLog = localStorage.getItem(ACTIVITY_LOG_KEY);
+    if (!savedLog) return null;
+    
+    // Parse the log
+    const activityLog: CarActivity[] = JSON.parse(savedLog, (key, value) => {
       if (key === 'timestamp') return new Date(value);
       return value;
     });
     
-    // Encontrar a atividade de exclusão
+    // Find deleted car activity
     const deletedActivity = activityLog.find(
-      activity => activity.id === activityId && activity.action === 'deleted' && activity.carData
+      activity => activity.id === id && activity.action === 'deleted' && activity.carData
     );
     
     if (!deletedActivity || !deletedActivity.carData) {
+      console.error('No deleted car data found for restoration');
       return null;
     }
     
-    // Restaurar o carro no localStorage
-    const carsStr = localStorage.getItem('cars');
-    let cars: Car[] = [];
+    // Get current cars
+    const savedCars = localStorage.getItem('cars_local_storage');
+    let cars: Car[] = savedCars ? JSON.parse(savedCars) : [];
     
-    if (carsStr) {
-      cars = JSON.parse(carsStr);
-    }
+    // Add the restored car
+    const restoredCar = deletedActivity.carData;
+    cars.push(restoredCar);
     
-    // Verificar se o carro já existe (para evitar duplicatas)
-    const carExists = cars.some(car => car.id === deletedActivity.carData!.id);
+    // Save back to localStorage
+    localStorage.setItem('cars_local_storage', JSON.stringify(cars));
     
-    if (!carExists) {
-      cars.push(deletedActivity.carData);
-      localStorage.setItem('cars', JSON.stringify(cars));
-      
-      // Registrar a restauração
-      logCarActivity(deletedActivity.carData, 'restored');
-      return deletedActivity.carData;
-    }
+    // Log restoration activity
+    logCarActivity(restoredCar, 'restored');
+    
+    return restoredCar;
   } catch (error) {
     console.error('Error restoring car:', error);
+    return null;
   }
-  
-  return null;
-};
-
-export const clearActivityLog = () => {
-  localStorage.removeItem('carActivityLog');
 };
