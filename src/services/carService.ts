@@ -147,7 +147,7 @@ export const deleteCar = async (id: number | string): Promise<void> => {
   }
 };
 
-// Upload car images - Simplified and more robust implementation
+// Upload car images - Improved implementation with new storage bucket
 export const uploadCarImages = async (files: File[]): Promise<string[]> => {
   try {
     console.log(`Iniciando upload de ${files.length} imagens...`);
@@ -160,25 +160,7 @@ export const uploadCarImages = async (files: File[]): Promise<string[]> => {
     
     const imageUrls: string[] = [];
     
-    // Tentar criar bucket caso não exista (não falharemos se ele já existir)
-    try {
-      const { data: bucketData, error: bucketError } = await supabase.storage.createBucket('car-images', {
-        public: true,
-        fileSizeLimit: 5242880, // 5MB
-      });
-      console.log('Resultado da criação do bucket:', bucketData, bucketError);
-    } catch (bucketError) {
-      console.log('Bucket car-images já existe ou erro ao criar:', bucketError);
-      // Continuar mesmo se houver erro (provavelmente o bucket já existe)
-    }
-    
     for (const file of files) {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${uuidv4()}.${fileExt}`;
-      const filePath = `${fileName}`;
-      
-      console.log(`Enviando arquivo: ${filePath} para o bucket car-images`);
-      
       // Verificar se o arquivo é muito grande
       if (file.size > 5242880) { // 5MB em bytes
         console.error('Arquivo muito grande:', file.name, file.size);
@@ -191,7 +173,13 @@ export const uploadCarImages = async (files: File[]): Promise<string[]> => {
         continue; // Pular este arquivo e ir para o próximo
       }
       
-      // Fazer upload do arquivo diretamente
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${uuidv4()}.${fileExt}`;
+      const filePath = `${fileName}`;
+      
+      console.log(`Enviando arquivo: ${filePath} para o bucket car-images`);
+      
+      // Upload do arquivo para o bucket 'car-images'
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('car-images')
         .upload(filePath, file, {
@@ -201,22 +189,7 @@ export const uploadCarImages = async (files: File[]): Promise<string[]> => {
       
       if (uploadError) {
         console.error('Erro ao enviar imagem:', uploadError);
-        
-        // Se falhar, tente obter a URL pública mesmo assim (pode ser que o arquivo já existe)
-        const { data } = supabase.storage
-          .from('car-images')
-          .getPublicUrl(filePath);
-        
-        if (data && data.publicUrl) {
-          console.log('Arquivo já existe, usando URL existente:', data.publicUrl);
-          imageUrls.push(data.publicUrl);
-          continue;
-        }
-        
-        // Se realmente falhou, use a imagem padrão
-        console.log('Usando imagem padrão devido a erro de upload');
-        imageUrls.push(DEFAULT_CAR_IMAGE);
-        continue;
+        continue; // Tentar o próximo arquivo
       }
       
       console.log('Upload realizado com sucesso:', uploadData);
@@ -230,7 +203,7 @@ export const uploadCarImages = async (files: File[]): Promise<string[]> => {
       imageUrls.push(data.publicUrl);
     }
     
-    // Se após tentativas, ainda não temos imagens, use a imagem padrão
+    // Se após os uploads ainda não temos imagens, use a imagem padrão
     if (imageUrls.length === 0) {
       console.log('Nenhuma imagem foi enviada com sucesso, usando imagem padrão');
       return [DEFAULT_CAR_IMAGE];
@@ -240,7 +213,11 @@ export const uploadCarImages = async (files: File[]): Promise<string[]> => {
     return imageUrls;
   } catch (error) {
     console.error('Erro ao enviar imagens:', error);
+    toast({
+      title: 'Erro no upload',
+      description: 'Não foi possível enviar as imagens. Será usada uma imagem genérica.',
+      variant: 'destructive'
+    });
     return [DEFAULT_CAR_IMAGE]; // Em caso de erro, use a imagem padrão
   }
 };
-
