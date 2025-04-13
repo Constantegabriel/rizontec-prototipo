@@ -10,6 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { ArrowLeft } from 'lucide-react';
 
 // Admin credentials
 const ADMIN_EMAIL = 'rizontec@gmail.com';
@@ -67,9 +68,24 @@ const Login: React.FC = () => {
       <Header />
       
       <main className="flex-grow container mx-auto px-4 py-8 flex items-center justify-center">
-        <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
+        <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-lg shadow-md">
+          <div className="flex justify-between items-center">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate('/')}
+              className="flex items-center gap-1 text-muted-foreground hover:text-primary"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Voltar
+            </Button>
+            <div className="text-center flex-1">
+              <h2 className="text-2xl font-bold">Login Administrativo</h2>
+            </div>
+            <div className="w-20"></div> {/* Spacer to balance the layout */}
+          </div>
+          
           <div className="text-center">
-            <h2 className="text-2xl font-bold">Login Administrativo</h2>
             <p className="text-gray-600 mt-2">Acesse para gerenciar o estoque</p>
           </div>
           

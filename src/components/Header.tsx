@@ -15,7 +15,7 @@ const Header: React.FC = () => {
           
           <div className="flex-1 text-center">
             <h1 className="text-2xl font-bold text-primary">AutoStore</h1>
-            <p className="text-sm text-muted-foreground">Seu parceiro confiável em veículos</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Seu parceiro confiável em veículos</p>
           </div>
           
           <div className="flex-1 flex justify-end">

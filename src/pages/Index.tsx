@@ -5,6 +5,7 @@ import SearchBar from '../components/SearchBar';
 import FilterMenu, { FilterOptions } from '../components/FilterMenu';
 import CarGrid from '../components/CarGrid';
 import Footer from '../components/Footer';
+import OffersCarousel from '../components/OffersCarousel';
 import { Car } from '../data/cars';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
@@ -150,7 +151,10 @@ const Index: React.FC = () => {
       <Header />
       
       <main className="flex-grow container mx-auto px-4">
-        <div className="py-8">
+        {/* Add the Offers Carousel */}
+        <OffersCarousel />
+        
+        <div className="py-6">
           <h2 className="text-3xl font-bold text-center">Encontre seu próximo veículo</h2>
           <p className="text-gray-600 text-center mt-2">
             Carros seminovos com procedência e garantia
@@ -175,8 +179,7 @@ const Index: React.FC = () => {
             <div className="flex justify-center my-6">
               <Button 
                 onClick={handleRefresh} 
-                className="px-8 py-6 text-lg font-medium"
-                size="lg"
+                className="rounded-full px-6 py-2 text-base font-medium bg-gradient-to-r from-red-600 to-red-400 hover:from-red-700 hover:to-red-500 shadow-md hover:shadow-lg transition-all duration-300 text-white border-none"
               >
                 Ver Estoque
               </Button>
