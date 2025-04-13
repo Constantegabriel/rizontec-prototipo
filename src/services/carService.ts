@@ -10,7 +10,7 @@ export const DEFAULT_CAR_IMAGE = "https://www.svgrepo.com/show/508699/car.svg";
 // Convert local Car type to Supabase database type
 const mapCarToDbCar = (car: Car, userId?: string): any => {
   return {
-    id: car.id ? car.id.toString() : uuidv4(),
+    id: uuidv4(), // Always generate a UUID for new cars, don't use the timestamp
     name: car.name,
     price: car.price,
     year: car.year,
@@ -33,7 +33,7 @@ const mapDbCarToCar = (dbCar: any): Car => {
     dbCar.images : [DEFAULT_CAR_IMAGE];
   
   return {
-    id: parseInt(dbCar.id) || Date.now(),
+    id: parseInt(dbCar.id) || Date.now(), // Maintain backward compatibility
     name: dbCar.name,
     price: dbCar.price,
     year: dbCar.year,
@@ -78,6 +78,9 @@ export const addCar = async (car: Car, userId?: string): Promise<Car> => {
     console.log('Adicionando carro:', car.name);
     const newCar = mapCarToDbCar(car, userId);
     
+    // Log the mapped car to check UUID format
+    console.log('Carro mapeado para inserção:', newCar);
+    
     const { data, error } = await supabase
       .from('cars')
       .insert(newCar)
@@ -86,10 +89,26 @@ export const addCar = async (car: Car, userId?: string): Promise<Car> => {
     
     if (error) {
       console.error('Erro ao adicionar carro:', error);
+      
+      // Display a user-friendly error message
+      toast({
+        title: 'Erro ao adicionar veículo',
+        description: 'Não foi possível adicionar o veículo ao estoque. Tente novamente.',
+        variant: 'destructive'
+      });
+      
       throw error;
     }
     
     console.log('Carro adicionado com sucesso:', data.id);
+    
+    // Display success message
+    toast({
+      title: 'Veículo adicionado',
+      description: `${car.name} foi adicionado ao estoque com sucesso.`,
+      variant: 'default'
+    });
+    
     return mapDbCarToCar(data);
   } catch (error) {
     console.error('Erro ao adicionar carro:', error);
@@ -115,6 +134,14 @@ export const updateCar = async (car: Car): Promise<Car> => {
     
     if (error) {
       console.error('Erro ao atualizar carro:', error);
+      
+      // Display a user-friendly error message
+      toast({
+        title: 'Erro ao atualizar veículo',
+        description: 'Não foi possível atualizar o veículo. Tente novamente.',
+        variant: 'destructive'
+      });
+      
       throw error;
     }
     
@@ -137,10 +164,25 @@ export const deleteCar = async (id: number | string): Promise<void> => {
     
     if (error) {
       console.error('Erro ao deletar carro:', error);
+      
+      // Display a user-friendly error message
+      toast({
+        title: 'Erro ao remover veículo',
+        description: 'Não foi possível remover o veículo do estoque. Tente novamente.',
+        variant: 'destructive'
+      });
+      
       throw error;
     }
     
     console.log('Carro deletado com sucesso');
+    
+    // Display success message
+    toast({
+      title: 'Veículo removido',
+      description: 'O veículo foi removido do estoque com sucesso.',
+      variant: 'default'
+    });
   } catch (error) {
     console.error('Erro ao deletar carro:', error);
     throw error;
