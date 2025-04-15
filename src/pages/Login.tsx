@@ -68,24 +68,9 @@ const Login: React.FC = () => {
       <Header />
       
       <main className="flex-grow container mx-auto px-4 py-8 flex items-center justify-center">
-        <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-lg shadow-md">
-          <div className="flex justify-between items-center">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => navigate('/')}
-              className="flex items-center gap-1 text-muted-foreground hover:text-primary"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Voltar
-            </Button>
-            <div className="text-center flex-1">
-              <h2 className="text-2xl font-bold">Login Administrativo</h2>
-            </div>
-            <div className="w-20"></div> {/* Spacer to balance the layout */}
-          </div>
-          
+        <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg shadow-md">
           <div className="text-center">
+            <h2 className="text-2xl font-bold">Login Administrativo</h2>
             <p className="text-gray-600 mt-2">Acesse para gerenciar o estoque</p>
           </div>
           
@@ -119,9 +104,20 @@ const Login: React.FC = () => {
                 )}
               />
               
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Entrando...' : 'Entrar'}
-              </Button>
+              <div className="space-y-4">
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? 'Entrando...' : 'Entrar'}
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full flex items-center justify-center gap-2"
+                  onClick={() => navigate('/')}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Voltar
+                </Button>
+              </div>
             </form>
           </Form>
         </div>

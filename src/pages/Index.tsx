@@ -11,10 +11,14 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { loadCars } from '@/services/carService';
 import { useQuery } from '@tanstack/react-query';
+import { ChevronRight, Filter, Search as SearchIcon, CarIcon } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Index: React.FC = () => {
   const [filteredCars, setFilteredCars] = useState<Car[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>({
     brand: null,
     minYear: 0,
@@ -25,13 +29,13 @@ const Index: React.FC = () => {
     maxMileage: null
   });
 
-  // Fetch cars using React Query with refetch interval for automatic updates
+  // Fetch cars using React Query
   const { data: allCars = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['cars'],
     queryFn: loadCars,
-    refetchInterval: 10000, // Recarregar a cada 10 segundos
-    refetchOnWindowFocus: true, // Recarregar quando a janela receber foco
-    staleTime: 5000, // Considerar dados atuais por 5 segundos
+    refetchInterval: 10000,
+    refetchOnWindowFocus: true,
+    staleTime: 5000,
   });
 
   // Calculate min and max values for filters
@@ -51,7 +55,7 @@ const Index: React.FC = () => {
     };
   };
 
-  // Apply search and filters together
+  // Apply filters
   const applyFilters = () => {
     console.log('Aplicando filtros em', allCars.length, 'carros');
     let results = allCars;
@@ -66,31 +70,27 @@ const Index: React.FC = () => {
       );
     }
     
-    // Apply brand filter if selected
+    // Apply filters
     if (filters.brand) {
       results = results.filter(car => 
         car.name.toLowerCase().startsWith(filters.brand.toLowerCase())
       );
     }
     
-    // Apply year range filter
     results = results.filter(car => 
       car.year >= filters.minYear && car.year <= filters.maxYear
     );
     
-    // Apply price range filter
     results = results.filter(car => 
       car.price >= filters.minPrice && car.price <= filters.maxPrice
     );
     
-    // Apply transmission filter if selected
     if (filters.transmission) {
       results = results.filter(car => 
         car.transmission.toLowerCase() === filters.transmission.toLowerCase()
       );
     }
     
-    // Apply mileage filter if selected
     if (filters.maxMileage) {
       results = results.filter(car => 
         car.mileage <= filters.maxMileage
@@ -120,22 +120,12 @@ const Index: React.FC = () => {
     }
   }, [allCars]);
 
-  // Handle search
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-  };
-
-  // Handle filters
-  const handleFilter = (newFilters: FilterOptions) => {
-    setFilters(newFilters);
-  };
-
   // Apply filters whenever search or filters change
   useEffect(() => {
     applyFilters();
   }, [searchQuery, filters, allCars]);
   
-  // Refresh handler to reload cars
+  // Refresh handler
   const handleRefresh = () => {
     refetch();
     toast({
@@ -145,63 +135,117 @@ const Index: React.FC = () => {
   };
   
   const { minYear, maxYear, minPrice, maxPrice, brands } = getMinMaxValues();
+  
+  const toggleFilters = () => {
+    setShowFilters(!showFilters);
+  };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
       
-      <main className="flex-grow container mx-auto px-4">
-        {/* Add the Offers Carousel */}
-        <OffersCarousel />
-        
-        <div className="py-6">
-          <h2 className="text-3xl font-bold text-center">Encontre seu próximo veículo</h2>
-          <p className="text-gray-600 text-center mt-2">
-            Carros seminovos com procedência e garantia
-          </p>
+      <main className="flex-grow">
+        {/* Hero carousel */}
+        <div className="w-full">
+          <OffersCarousel />
         </div>
         
-        <div className="flex flex-col lg:flex-row gap-4 items-start">
-          <div className="w-full">
-            <div className="flex items-center justify-between mb-4">
-              <SearchBar onSearch={handleSearch} />
-            </div>
-            
-            <FilterMenu 
-              onFilter={handleFilter}
-              minYear={minYear}
-              maxYear={maxYear}
-              minPrice={minPrice}
-              maxPrice={maxPrice}
-              brands={brands}
-            />
-            
-            <div className="flex justify-center my-6">
-              <Button 
-                onClick={handleRefresh} 
-                className="rounded-full px-6 py-2 text-base font-medium bg-gradient-to-r from-red-600 to-red-400 hover:from-red-700 hover:to-red-500 shadow-md hover:shadow-lg transition-all duration-300 text-white border-none"
-              >
-                Ver Estoque
-              </Button>
-            </div>
-            
-            <div className="mt-4 mb-2">
-              <p className="text-gray-600">
-                {isLoading ? "Carregando..." : 
-                  filteredCars.length === 0 
-                    ? "Nenhum veículo encontrado" 
-                    : `Mostrando ${filteredCars.length} veículo${filteredCars.length !== 1 ? 's' : ''}`}
+        {/* Main search section */}
+        <div className="bg-gradient-to-r from-red-600 to-red-400 py-8">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto text-center mb-6">
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+                Encontre seu próximo veículo
+              </h1>
+              <p className="text-white/80 text-lg">
+                Veículos seminovos com qualidade e procedência garantida
               </p>
             </div>
             
-            {isError ? (
-              <div className="text-center my-8">
-                <p className="text-red-500">Erro ao carregar veículos. Tente novamente.</p>
-              </div>
-            ) : (
-              <CarGrid cars={filteredCars} />
-            )}
+            <Card className="bg-white rounded-xl shadow-lg overflow-hidden">
+              <CardContent className="p-0">
+                <Tabs defaultValue="comprar" className="w-full">
+                  <TabsList className="w-full grid grid-cols-2 bg-gray-100 rounded-none">
+                    <TabsTrigger value="comprar" className="py-3 text-base font-medium">Comprar</TabsTrigger>
+                    <TabsTrigger value="vender" className="py-3 text-base font-medium">Vender</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="comprar" className="px-6 py-5">
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="flex-grow">
+                        <SearchBar onSearch={handleSearch} />
+                      </div>
+                      
+                      <Button 
+                        variant="outline" 
+                        onClick={toggleFilters}
+                        className="flex items-center gap-2 whitespace-nowrap"
+                      >
+                        <Filter className="h-4 w-4" />
+                        Filtros
+                        <ChevronRight className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-90' : ''}`} />
+                      </Button>
+                      
+                      <Button 
+                        onClick={handleRefresh} 
+                        className="bg-gradient-to-r from-red-600 to-red-400 hover:from-red-700 hover:to-red-500 text-white rounded-full font-medium"
+                      >
+                        <SearchIcon className="h-4 w-4 mr-2" />
+                        Ver Estoque
+                      </Button>
+                    </div>
+                    
+                    {showFilters && (
+                      <div className="mt-4 pb-2 border-t pt-4">
+                        <FilterMenu 
+                          onFilter={handleFilter}
+                          minYear={minYear}
+                          maxYear={maxYear}
+                          minPrice={minPrice}
+                          maxPrice={maxPrice}
+                          brands={brands}
+                        />
+                      </div>
+                    )}
+                  </TabsContent>
+                  
+                  <TabsContent value="vender" className="p-6">
+                    <div className="text-center py-8">
+                      <CarIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                      <h3 className="text-xl font-semibold mb-2">Venda seu veículo</h3>
+                      <p className="text-gray-500 mb-4">
+                        Anuncie seu veículo conosco de forma rápida e segura
+                      </p>
+                      <Button className="bg-gradient-to-r from-red-600 to-red-400 hover:from-red-700 hover:to-red-500 text-white rounded-full px-6 py-2">
+                        Entre em contato
+                      </Button>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
           </div>
+        </div>
+        
+        {/* Results section */}
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Veículos disponíveis</h2>
+            <div className="text-sm text-gray-500">
+              {isLoading ? "Carregando..." : 
+                filteredCars.length === 0 
+                  ? "Nenhum veículo encontrado" 
+                  : `Mostrando ${filteredCars.length} veículo${filteredCars.length !== 1 ? 's' : ''}`}
+            </div>
+          </div>
+          
+          {isError ? (
+            <div className="text-center my-8">
+              <p className="text-red-500">Erro ao carregar veículos. Tente novamente.</p>
+            </div>
+          ) : (
+            <CarGrid cars={filteredCars} />
+          )}
         </div>
       </main>
       

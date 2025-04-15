@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Car } from '@/data/cars';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,7 +29,6 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
   const [selectedPeriod, setSelectedPeriod] = useState<'7' | '15' | '30'>('7');
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>('all');
 
-  // Load activity log from localStorage on component mount
   useEffect(() => {
     loadActivityLog();
   }, []);
@@ -39,7 +37,6 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
     const savedLog = localStorage.getItem('carActivityLog');
     if (savedLog) {
       try {
-        // Convert string dates back to Date objects
         const parsedLog = JSON.parse(savedLog, (key, value) => {
           if (key === 'timestamp') return new Date(value);
           return value;
@@ -125,30 +122,25 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
     setIsRestoreDialogOpen(true);
   };
 
-  // Filter activities based on current filter
   const filterActivities = (activities: CarActivity[]) => {
     if (activityFilter === 'all') return activities;
     return activities.filter(activity => activity.action === activityFilter);
   };
 
-  // Apply filter when clicking on stat cards
   const handleStatCardClick = (filter: ActivityFilter) => {
     setActivityFilter(filter);
-    // Open the total activities section if it's not already open
     setExpandedSections(prev => ({
       ...prev,
       total: true
     }));
   };
 
-  // Calculate statistics
   const totalCars = cars.length;
   const addedCars = activityLog.filter(log => log.action === 'added').length;
   const deletedCars = activityLog.filter(log => log.action === 'deleted').length;
   const editedCars = activityLog.filter(log => log.action === 'edited').length;
   const restoredCars = activityLog.filter(log => log.action === 'restored').length;
   
-  // Get activities by period
   const getActivitiesByPeriod = (days: number) => {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
@@ -158,15 +150,12 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   };
   
-  // Get deleted cars that can be restored
   const deletedActivities = activityLog
     .filter(activity => activity.action === 'deleted' && activity.carData)
     .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
-  // Get recent activities based on selected period
   const recentActivities = getActivitiesByPeriod(parseInt(selectedPeriod));
 
-  // Get filtered activities for the total section
   const filteredActivities = filterActivities(activityLog)
     .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
@@ -325,10 +314,10 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
         {expandedSections.recent && (
           <CardContent className="pt-6">
             <Tabs value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as '7' | '15' | '30')}>
-              <TabsList className="mb-4">
-                <TabsTrigger value="7">Últimos 7 dias</TabsTrigger>
-                <TabsTrigger value="15">Últimos 15 dias</TabsTrigger>
-                <TabsTrigger value="30">Últimos 30 dias</TabsTrigger>
+              <TabsList className="mb-4 w-full flex justify-between overflow-x-auto">
+                <TabsTrigger value="7" className="flex-1 min-w-0 px-2 whitespace-nowrap">7 dias</TabsTrigger>
+                <TabsTrigger value="15" className="flex-1 min-w-0 px-2 whitespace-nowrap">15 dias</TabsTrigger>
+                <TabsTrigger value="30" className="flex-1 min-w-0 px-2 whitespace-nowrap">30 dias</TabsTrigger>
               </TabsList>
               
               <TabsContent value={selectedPeriod}>

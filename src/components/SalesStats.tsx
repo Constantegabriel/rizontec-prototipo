@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { getSalesStats, getTotalSalesAmount } from '@/utils/activityLogger';
@@ -38,19 +37,20 @@ const SalesStats: React.FC = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Total de Vendas</p>
               <h3 className="text-2xl font-bold">{formatCurrency(totalSales)}</h3>
             </div>
             
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
               {periods.map(period => (
                 <Button
                   key={period.id}
                   size="sm"
                   variant={activePeriod === period.id ? "default" : "outline"}
                   onClick={() => setActivePeriod(period.id as any)}
+                  className="flex-1 sm:flex-auto"
                 >
                   {period.label}
                 </Button>
