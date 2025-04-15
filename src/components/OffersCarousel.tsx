@@ -47,7 +47,7 @@ const OffersCarousel: React.FC = () => {
           align: "start",
           loop: true,
         }}
-        className="w-full max-w-5xl mx-auto"
+        className="w-full max-w-[95%] xl:max-w-[85%] mx-auto" // Wider on desktop
         setApi={(api) => {
           if (api) {
             api.on("select", () => {
@@ -56,7 +56,7 @@ const OffersCarousel: React.FC = () => {
           }
         }}
       >
-        <CarouselContent className="h-[250px] sm:h-[350px]">
+        <CarouselContent className="h-[250px] sm:h-[350px] md:h-[400px]">
           {offerImages.map((image, index) => (
             <CarouselItem key={image.id} className="overflow-hidden rounded-xl">
               <div className="relative h-full w-full">

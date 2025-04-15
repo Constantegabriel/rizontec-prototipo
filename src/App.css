@@ -24,3 +24,39 @@ body {
     padding-right: 1rem;
   }
 }
+
+/* Custom styles for improved UI elements */
+.search-input {
+  @apply bg-secondary/80 border-none rounded-full py-3 px-5 text-foreground placeholder:text-muted-foreground/70 focus:ring-2 focus:ring-primary/70 transition-all duration-200;
+}
+
+.search-button {
+  @apply bg-primary hover:bg-primary/90 text-white rounded-full font-medium transition-all duration-200 flex items-center justify-center gap-2;
+}
+
+.carousel-pagination-dot {
+  @apply w-3 h-3 rounded-full transition-all duration-300 bg-gray-600 cursor-pointer;
+}
+
+.carousel-pagination-dot-active {
+  @apply w-5 bg-primary;
+}
+
+/* Glass effect for cards */
+.glass-card {
+  @apply backdrop-blur-xl bg-white/5 border border-white/10 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.3)];
+}
+
+/* Filter and form elements */
+.filter-input {
+  @apply bg-secondary border-none rounded-md text-foreground;
+}
+
+/* Button styles */
+.btn-primary {
+  @apply bg-gradient-to-r from-red-600 to-red-400 hover:from-red-700 hover:to-red-500 text-white font-medium rounded-full transition-all duration-200;
+}
+
+.btn-outline {
+  @apply border border-border bg-transparent hover:bg-accent/10 text-foreground font-medium rounded-full transition-all duration-200;
+}

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Car } from '@/data/cars';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -163,6 +164,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
     <div className="space-y-6">
       <h3 className="text-xl font-semibold mb-4">Estatísticas do Estoque</h3>
       
+      {/* Stats cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
         <Card 
           className={`cursor-pointer transition-all hover:shadow-md ${activityFilter === 'all' ? 'ring-2 ring-primary' : ''}`} 
@@ -240,6 +242,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
         </Card>
       </div>
       
+      {/* Activity logs - Reorganized to prevent horizontal scrolling */}
       <Card>
         <CardHeader 
           className="cursor-pointer border-b"
@@ -266,15 +269,15 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
                 {filteredActivities.slice(0, 20).map((activity, index) => (
                   <div 
                     key={`${activity.id}-${index}`} 
-                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer gap-2"
                     onClick={() => showActivityDetails(activity)}
                   >
                     <div className="flex items-center">
                       {getActionIcon(activity.action)}
-                      <span className="ml-2">{activity.carName}</span>
+                      <span className="ml-2 truncate">{activity.carName}</span>
                     </div>
-                    <div className="flex items-center">
-                      <span className={`mr-3 font-medium ${getActionColor(activity.action)}`}>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <span className={`font-medium ${getActionColor(activity.action)}`}>
                         {getActionText(activity.action)}
                       </span>
                       <span className="text-sm text-gray-500">{formatDate(activity.timestamp)}</span>
@@ -298,6 +301,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
         )}
       </Card>
       
+      {/* Recent Activity - Fixed tabs for mobile */}
       <Card>
         <CardHeader 
           className="cursor-pointer border-b"
@@ -314,11 +318,13 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
         {expandedSections.recent && (
           <CardContent className="pt-6">
             <Tabs value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as '7' | '15' | '30')}>
-              <TabsList className="mb-4 w-full flex justify-between overflow-x-auto">
-                <TabsTrigger value="7" className="flex-1 min-w-0 px-2 whitespace-nowrap">7 dias</TabsTrigger>
-                <TabsTrigger value="15" className="flex-1 min-w-0 px-2 whitespace-nowrap">15 dias</TabsTrigger>
-                <TabsTrigger value="30" className="flex-1 min-w-0 px-2 whitespace-nowrap">30 dias</TabsTrigger>
-              </TabsList>
+              <div className="overflow-x-auto pb-2">
+                <TabsList className="mb-4 grid grid-cols-3 min-w-full">
+                  <TabsTrigger value="7">7 dias</TabsTrigger>
+                  <TabsTrigger value="15">15 dias</TabsTrigger>
+                  <TabsTrigger value="30">30 dias</TabsTrigger>
+                </TabsList>
+              </div>
               
               <TabsContent value={selectedPeriod}>
                 {recentActivities.length === 0 ? (
@@ -328,15 +334,15 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
                     {recentActivities.map((activity, index) => (
                       <div 
                         key={`recent-${activity.id}-${index}`} 
-                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer"
+                        className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer gap-2"
                         onClick={() => showActivityDetails(activity)}
                       >
                         <div className="flex items-center">
                           {getActionIcon(activity.action)}
-                          <span className="ml-2">{activity.carName}</span>
+                          <span className="ml-2 truncate">{activity.carName}</span>
                         </div>
-                        <div className="flex items-center">
-                          <span className={`mr-3 font-medium ${getActionColor(activity.action)}`}>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                          <span className={`font-medium ${getActionColor(activity.action)}`}>
                             {getActionText(activity.action)}
                           </span>
                           <span className="text-sm text-gray-500">{formatDate(activity.timestamp)}</span>
@@ -351,6 +357,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
         )}
       </Card>
       
+      {/* Deleted vehicles section */}
       <Card>
         <CardHeader 
           className="cursor-pointer border-b"
@@ -373,13 +380,13 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
                 {deletedActivities.map((activity, index) => (
                   <div 
                     key={`deleted-${activity.id}-${index}`} 
-                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-secondary/30 transition-colors"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-secondary/30 transition-colors gap-2"
                   >
                     <div className="flex items-center">
                       <MinusCircle className="h-4 w-4 text-red-500" />
-                      <span className="ml-2">{activity.carName}</span>
+                      <span className="ml-2 truncate">{activity.carName}</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2">
                       <span className="text-sm text-gray-500">{formatDate(activity.timestamp)}</span>
                       <Button 
                         size="sm" 

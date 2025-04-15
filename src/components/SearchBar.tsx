@@ -21,7 +21,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Busque por marca, modelo ou ano..."
+          placeholder="Buscar por modelo, marca ou ano"
           className="search-input w-full pl-12"
         />
         <button 

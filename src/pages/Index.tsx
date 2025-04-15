@@ -158,14 +158,14 @@ const Index: React.FC = () => {
           <OffersCarousel />
         </div>
         
-        {/* Main search section */}
-        <div className="bg-gradient-to-r from-red-600/80 to-red-500/80 py-8">
+        {/* Main search section - Changed from red to dark gray background */}
+        <div className="bg-secondary py-8">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center mb-6">
-              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
                 Encontre seu próximo veículo
               </h1>
-              <p className="text-white/80 text-lg">
+              <p className="text-muted-foreground text-lg">
                 Veículos seminovos com qualidade e procedência garantida
               </p>
             </div>
