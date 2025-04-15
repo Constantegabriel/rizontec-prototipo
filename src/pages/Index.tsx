@@ -140,6 +140,15 @@ const Index: React.FC = () => {
     setShowFilters(!showFilters);
   };
 
+  // Add missing handlers
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const handleFilter = (newFilters: FilterOptions) => {
+    setFilters(newFilters);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
