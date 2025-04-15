@@ -1,4 +1,5 @@
 
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -17,7 +18,7 @@
     --primary: 0 80% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 3.7% 12%; /* Darker gray for filter backgrounds */
+    --secondary: 240 5% 10%; /* Darker gray for filter backgrounds */
     --secondary-foreground: 0 0% 98%;
 
     --muted: 240 3.7% 15.9%;
@@ -30,7 +31,7 @@
     --destructive-foreground: 0 0% 98%;
 
     --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
+    --input: 240 5% 8%; /* Darker input background */
     --ring: 0 80% 50%;
 
     --radius: 0.5rem;
@@ -74,7 +75,7 @@
 
 /* Custom styles for improved UI elements */
 .search-input {
-  @apply bg-secondary/80 border-none rounded-full py-3 px-5 text-foreground placeholder:text-muted-foreground/70 focus:ring-2 focus:ring-primary/70 transition-all duration-200;
+  @apply bg-input border-none rounded-full py-3 px-5 text-foreground placeholder:text-muted-foreground/70 focus:ring-2 focus:ring-primary/70 transition-all duration-200 text-sm;
 }
 
 .search-button {
@@ -129,3 +130,4 @@
 .admin-panel-fix {
   @apply overflow-x-hidden max-w-full;
 }
+
