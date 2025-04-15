@@ -158,7 +158,7 @@ const Index: React.FC = () => {
           <OffersCarousel />
         </div>
         
-        {/* Main search section - Changed from red to dark gray background */}
+        {/* Main search section - Darker gray background */}
         <div className="bg-secondary py-8">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center mb-6">
@@ -184,7 +184,7 @@ const Index: React.FC = () => {
                   >
                     <Filter className="h-4 w-4" />
                     Filtros
-                    <ChevronRight className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-90' : ''}`} />
+                    <ChevronRight className={`h-4 w-4 transition-transform duration-300 ${showFilters ? 'rotate-90' : ''}`} />
                   </Button>
                   
                   <Button 
@@ -197,7 +197,10 @@ const Index: React.FC = () => {
                 </div>
                 
                 {showFilters && (
-                  <div className="mt-4 pt-4 border-t border-white/10">
+                  <div 
+                    className={`mt-4 pt-4 border-t border-white/10 transition-all duration-300 
+                      ${showFilters ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}
+                  >
                     <FilterMenu 
                       onFilter={handleFilter}
                       minYear={minYear}

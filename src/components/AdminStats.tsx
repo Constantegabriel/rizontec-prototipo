@@ -161,7 +161,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
     .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 admin-panel-fix">
       <h3 className="text-xl font-semibold mb-4">Estatísticas do Estoque</h3>
       
       {/* Stats cards */}
@@ -272,15 +272,15 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
                     className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer gap-2"
                     onClick={() => showActivityDetails(activity)}
                   >
-                    <div className="flex items-center">
+                    <div className="flex items-center truncate max-w-[200px]">
                       {getActionIcon(activity.action)}
                       <span className="ml-2 truncate">{activity.carName}</span>
                     </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                      <span className={`font-medium ${getActionColor(activity.action)}`}>
+                    <div className="flex items-center gap-3 text-xs sm:text-sm">
+                      <span className={`font-medium whitespace-nowrap ${getActionColor(activity.action)}`}>
                         {getActionText(activity.action)}
                       </span>
-                      <span className="text-sm text-gray-500">{formatDate(activity.timestamp)}</span>
+                      <span className="text-gray-500 whitespace-nowrap">{formatDate(activity.timestamp)}</span>
                     </div>
                   </div>
                 ))}
@@ -337,15 +337,15 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
                         className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer gap-2"
                         onClick={() => showActivityDetails(activity)}
                       >
-                        <div className="flex items-center">
+                        <div className="flex items-center truncate max-w-[200px]">
                           {getActionIcon(activity.action)}
                           <span className="ml-2 truncate">{activity.carName}</span>
                         </div>
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                          <span className={`font-medium ${getActionColor(activity.action)}`}>
+                        <div className="flex items-center gap-3 text-xs sm:text-sm">
+                          <span className={`font-medium whitespace-nowrap ${getActionColor(activity.action)}`}>
                             {getActionText(activity.action)}
                           </span>
-                          <span className="text-sm text-gray-500">{formatDate(activity.timestamp)}</span>
+                          <span className="text-gray-500 whitespace-nowrap">{formatDate(activity.timestamp)}</span>
                         </div>
                       </div>
                     ))}
@@ -382,17 +382,17 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
                     key={`deleted-${activity.id}-${index}`} 
                     className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-secondary/30 transition-colors gap-2"
                   >
-                    <div className="flex items-center">
+                    <div className="flex items-center truncate max-w-[200px]">
                       <MinusCircle className="h-4 w-4 text-red-500" />
                       <span className="ml-2 truncate">{activity.carName}</span>
                     </div>
-                    <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2">
-                      <span className="text-sm text-gray-500">{formatDate(activity.timestamp)}</span>
+                    <div className="flex items-center justify-between sm:justify-end gap-3">
+                      <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">{formatDate(activity.timestamp)}</span>
                       <Button 
                         size="sm" 
                         variant="outline"
                         onClick={() => openRestoreDialog(activity)}
-                        className="flex items-center gap-1"
+                        className="flex items-center gap-1 whitespace-nowrap"
                       >
                         <RotateCcw className="h-3 w-3" />
                         Restaurar

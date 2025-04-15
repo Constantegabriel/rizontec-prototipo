@@ -17,7 +17,7 @@
     --primary: 0 80% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 3.7% 15.9%;
+    --secondary: 240 3.7% 12%; /* Darker gray for filter backgrounds */
     --secondary-foreground: 0 0% 98%;
 
     --muted: 240 3.7% 15.9%;
@@ -106,4 +106,26 @@
 
 .btn-outline {
   @apply border border-border bg-transparent hover:bg-accent/10 text-foreground font-medium rounded-full transition-all duration-200;
+}
+
+/* Animation for filter section */
+.filter-animation-enter {
+  @apply opacity-0 -translate-y-4;
+}
+
+.filter-animation-enter-active {
+  @apply opacity-100 translate-y-0 transition-all duration-300 ease-out;
+}
+
+.filter-animation-exit {
+  @apply opacity-100 translate-y-0;
+}
+
+.filter-animation-exit-active {
+  @apply opacity-0 -translate-y-4 transition-all duration-200 ease-in;
+}
+
+/* Fix horizontal scroll in admin panels */
+.admin-panel-fix {
+  @apply overflow-x-hidden max-w-full;
 }

@@ -22,13 +22,13 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Buscar por modelo, marca ou ano"
-          className="search-input w-full pl-12"
+          className="search-input w-full pl-12 text-sm"
         />
         <button 
           type="submit" 
           className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
         >
-          <Search size={20} />
+          <Search size={18} />
         </button>
       </form>
     </div>

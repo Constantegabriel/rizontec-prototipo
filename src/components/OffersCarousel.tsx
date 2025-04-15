@@ -7,6 +7,7 @@ import {
   CarouselNext,
   CarouselPrevious
 } from "@/components/ui/carousel";
+import { Car as CarIcon } from 'lucide-react';
 
 const offerImages = [
   {
@@ -47,7 +48,7 @@ const OffersCarousel: React.FC = () => {
           align: "start",
           loop: true,
         }}
-        className="w-full max-w-[95%] xl:max-w-[85%] mx-auto" // Wider on desktop
+        className="w-full max-w-[98%] lg:max-w-[90%] xl:max-w-[88%] mx-auto" // Wider on desktop
         setApi={(api) => {
           if (api) {
             api.on("select", () => {
@@ -70,6 +71,11 @@ const OffersCarousel: React.FC = () => {
                     <h3 className="text-2xl font-bold">{image.title}</h3>
                     <p className="text-sm opacity-90">{image.alt}</p>
                   </div>
+                </div>
+                
+                {/* Generic car icon for empty states or as overlay */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-10">
+                  <CarIcon size={120} strokeWidth={1} />
                 </div>
               </div>
             </CarouselItem>
