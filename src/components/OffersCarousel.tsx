@@ -1,6 +1,5 @@
 
 import React, { useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { 
   Carousel,
   CarouselContent,
@@ -42,7 +41,7 @@ const OffersCarousel: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full py-4 mb-6">
+    <div className="w-full py-4 mb-2">
       <Carousel
         opts={{
           align: "start",
@@ -57,7 +56,7 @@ const OffersCarousel: React.FC = () => {
           }
         }}
       >
-        <CarouselContent className="h-[250px] sm:h-[300px]">
+        <CarouselContent className="h-[250px] sm:h-[350px]">
           {offerImages.map((image, index) => (
             <CarouselItem key={image.id} className="overflow-hidden rounded-xl">
               <div className="relative h-full w-full">
@@ -66,9 +65,9 @@ const OffersCarousel: React.FC = () => {
                   alt={image.alt} 
                   className="w-full h-full object-cover transition-transform duration-1000 hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end">
-                  <div className="p-4 text-white">
-                    <h3 className="text-xl font-bold">{image.title}</h3>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end">
+                  <div className="p-6 text-white">
+                    <h3 className="text-2xl font-bold">{image.title}</h3>
                     <p className="text-sm opacity-90">{image.alt}</p>
                   </div>
                 </div>
@@ -77,8 +76,8 @@ const OffersCarousel: React.FC = () => {
           ))}
         </CarouselContent>
         
-        <CarouselPrevious className="left-2 bg-black/30 text-white hover:bg-black/50 hover:text-white border-none" />
-        <CarouselNext className="right-2 bg-black/30 text-white hover:bg-black/50 hover:text-white border-none" />
+        <CarouselPrevious className="left-4 bg-black/50 text-white hover:bg-black/70 hover:text-white border-none" />
+        <CarouselNext className="right-4 bg-black/50 text-white hover:bg-black/70 hover:text-white border-none" />
         
         {/* Custom pagination */}
         <div className="flex justify-center mt-4 gap-2">
@@ -86,10 +85,8 @@ const OffersCarousel: React.FC = () => {
             <button
               key={index}
               onClick={() => setActiveIndex(index)}
-              className={`w-8 h-2 rounded-full transition-all duration-300 ${
-                activeIndex === index 
-                  ? "bg-gradient-to-r from-red-600 to-red-400 w-12" 
-                  : "bg-gray-300"
+              className={`carousel-pagination-dot ${
+                activeIndex === index ? "carousel-pagination-dot-active" : ""
               }`}
               aria-label={`Go to slide ${index + 1}`}
             />
