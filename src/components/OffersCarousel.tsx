@@ -1,10 +1,12 @@
 
 import React from 'react';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Autoplay } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const OffersCarousel: React.FC = () => {
   // Example banner content - in a real app this would come from a database
@@ -34,32 +36,34 @@ const OffersCarousel: React.FC = () => {
 
   return (
     <div className="offers-swiper">
-      <Swiper
-        modules={[Navigation, Pagination, Autoplay]}
-        spaceBetween={20}
-        slidesPerView={1}
-        navigation
-        pagination={{ clickable: true }}
-        autoplay={{ delay: 5000, disableOnInteraction: false }}
-        className="rounded-xl overflow-hidden"
+      <Carousel
+        opts={{
+          align: "start",
+          loop: true,
+        }}
+        className="w-full rounded-xl overflow-hidden"
       >
-        {banners.map((banner) => (
-          <SwiperSlide key={banner.id}>
-            <div className="relative h-[250px] md:h-[350px] w-full">
-              <img 
-                src={banner.image} 
-                alt={banner.title} 
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-              <div className={`absolute inset-0 bg-gradient-to-r ${banner.color} opacity-90`}></div>
-              <div className="absolute inset-0 flex flex-col justify-center items-start p-6 md:p-12 text-white">
-                <h2 className="text-2xl md:text-4xl font-bold mb-2">{banner.title}</h2>
-                <p className="text-lg md:text-xl max-w-xl">{banner.description}</p>
+        <CarouselContent>
+          {banners.map((banner) => (
+            <CarouselItem key={banner.id}>
+              <div className="relative h-[250px] md:h-[350px] w-full">
+                <img 
+                  src={banner.image} 
+                  alt={banner.title} 
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className={`absolute inset-0 bg-gradient-to-r ${banner.color} opacity-90`}></div>
+                <div className="absolute inset-0 flex flex-col justify-center items-start p-6 md:p-12 text-white">
+                  <h2 className="text-2xl md:text-4xl font-bold mb-2">{banner.title}</h2>
+                  <p className="text-lg md:text-xl max-w-xl">{banner.description}</p>
+                </div>
               </div>
-            </div>
-          </SwiperSlide>
-        ))}
-      </Swiper>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious className="left-4 bg-black/30 hover:bg-black/50 text-white border-none" />
+        <CarouselNext className="right-4 bg-black/30 hover:bg-black/50 text-white border-none" />
+      </Carousel>
     </div>
   );
 };
