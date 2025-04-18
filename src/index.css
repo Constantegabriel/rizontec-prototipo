@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -139,6 +140,7 @@
 .offers-swiper {
   width: 100%;
   margin: 0 auto;
+  margin-bottom: 1.5rem; /* Added spacing below swiper */
 }
 
 /* Cash flow dashboard styles */
@@ -148,4 +150,9 @@
 
 .stat-card {
   @apply bg-gradient-to-br from-secondary to-secondary/50 border border-gray-700 rounded-lg p-4;
+}
+
+/* Highlighted card style for selected stats */
+.stat-card-selected {
+  @apply ring-2 border border-transparent transition-all;
 }

@@ -329,9 +329,9 @@ const Admin: React.FC = () => {
         </div>
         
         <div className="mb-6 border-b">
-          <div className="flex flex-wrap space-x-4">
+          <div className="grid grid-cols-3 sm:flex sm:flex-wrap sm:space-x-4 gap-1 sm:gap-0">
             <button
-              className={`px-4 py-2 font-medium transition-colors ${
+              className={`px-2 sm:px-4 py-2 font-medium transition-colors text-center ${
                 activeTab === 'add' 
                   ? 'border-b-2 border-primary text-primary'
                   : 'text-muted-foreground hover:text-foreground'
@@ -341,7 +341,7 @@ const Admin: React.FC = () => {
               Adicionar Veículo
             </button>
             <button
-              className={`px-4 py-2 font-medium transition-colors ${
+              className={`px-2 sm:px-4 py-2 font-medium transition-colors text-center ${
                 activeTab === 'list' 
                   ? 'border-b-2 border-primary text-primary'
                   : 'text-muted-foreground hover:text-foreground'
@@ -351,7 +351,7 @@ const Admin: React.FC = () => {
               Estoque Atual
             </button>
             <button
-              className={`px-4 py-2 font-medium transition-colors ${
+              className={`px-2 sm:px-4 py-2 font-medium transition-colors text-center ${
                 activeTab === 'stats' 
                   ? 'border-b-2 border-primary text-primary'
                   : 'text-muted-foreground hover:text-foreground'

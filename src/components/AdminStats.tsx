@@ -376,23 +376,23 @@ const AdminStats: React.FC<AdminStatsProps> = ({ cars, onCarRestored }) => {
             {deletedActivities.length === 0 ? (
               <p className="text-gray-500 text-center py-4">Nenhum veículo excluído para restaurar</p>
             ) : (
-              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 overflow-x-hidden">
                 {deletedActivities.map((activity, index) => (
                   <div 
                     key={`deleted-${activity.id}-${index}`} 
                     className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-secondary/30 transition-colors gap-2"
                   >
-                    <div className="flex items-center truncate max-w-[200px]">
-                      <MinusCircle className="h-4 w-4 text-red-500" />
+                    <div className="flex items-center truncate max-w-[200px] sm:max-w-none">
+                      <MinusCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
                       <span className="ml-2 truncate">{activity.carName}</span>
                     </div>
-                    <div className="flex items-center justify-between sm:justify-end gap-3">
+                    <div className="flex items-center justify-between sm:justify-end gap-3 mt-2 sm:mt-0">
                       <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">{formatDate(activity.timestamp)}</span>
                       <Button 
                         size="sm" 
                         variant="outline"
                         onClick={() => openRestoreDialog(activity)}
-                        className="flex items-center gap-1 whitespace-nowrap"
+                        className="flex items-center gap-1 whitespace-nowrap flex-shrink-0"
                       >
                         <RotateCcw className="h-3 w-3" />
                         Restaurar

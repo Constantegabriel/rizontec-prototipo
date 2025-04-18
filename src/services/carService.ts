@@ -1,9 +1,8 @@
-
 import { Car } from "@/data/cars";
 import { toast } from "@/components/ui/use-toast";
 
 // URL da imagem genérica para usar quando não houver imagens
-export const DEFAULT_CAR_IMAGE = "https://www.shutterstock.com/image-vector/3d-vector-illustration-car-covered-600nw-2512537225.jpg";
+export const DEFAULT_CAR_IMAGE = "https://st2.depositphotos.com/1765561/5932/i/450/depositphotos_59325625-stock-photo-car-covered-with-a-grey.jpg";
 
 // Local storage keys
 const CARS_STORAGE_KEY = "cars_local_storage";

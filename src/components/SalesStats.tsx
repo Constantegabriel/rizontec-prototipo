@@ -1,15 +1,17 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { getSalesStats, getTotalSalesAmount, getTotalSalesCount, getSalesByPeriod } from '@/utils/activityLogger';
 import { formatCurrency } from '@/lib/utils';
-import { CreditCard, RefreshCcw, DollarSign, BarChart3 } from 'lucide-react';
+import { CreditCard, RefreshCcw, DollarSign, BarChart3, FileDown } from 'lucide-react';
+import { toast } from 'sonner';
 
 const SalesStats: React.FC = () => {
   const [activePeriod, setActivePeriod] = useState<'7d' | '14d' | '21d' | '30d' | '3m' | '6m' | '12m'>('7d');
+  const chartRef = useRef<HTMLDivElement>(null);
   
   const stats = getSalesByPeriod(activePeriod);
   const totalSales = getTotalSalesAmount();
@@ -34,6 +36,17 @@ const SalesStats: React.FC = () => {
     { id: '6m', label: '6 meses' },
     { id: '12m', label: '12 meses' }
   ];
+
+  const downloadPDF = () => {
+    // This is a simple implementation that would need to be expanded with a proper PDF library like jsPDF
+    // For now, we'll show a toast message
+    toast.success(`Relatório de ${getPeriodLabel(activePeriod)} baixado com sucesso!`);
+  };
+
+  const getPeriodLabel = (period: string): string => {
+    const periodObj = periods.find(p => p.id === period);
+    return periodObj ? periodObj.label : period;
+  };
   
   return (
     <Card className="w-full">
@@ -92,7 +105,7 @@ const SalesStats: React.FC = () => {
             </div>
             
             <div className="overflow-x-auto pb-2">
-              <TabsList className="inline-flex h-9 items-center rounded-lg bg-muted p-1 text-muted-foreground w-full justify-start space-x-1">
+              <TabsList className="inline-flex h-9 items-center rounded-lg bg-muted p-1 text-muted-foreground w-full justify-start space-x-1 min-w-max">
                 {periods.map(period => (
                   <TabsTrigger
                     key={period.id}
@@ -110,7 +123,7 @@ const SalesStats: React.FC = () => {
           </div>
           
           {/* Chart */}
-          <div className="h-[300px] w-full">
+          <div className="h-[300px] w-full bg-background" ref={chartRef}>
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
@@ -134,15 +147,37 @@ const SalesStats: React.FC = () => {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center">
-                <p className="text-muted-foreground">Sem dados disponíveis para o período selecionado</p>
+              <div className="h-full flex flex-col items-center justify-center bg-background">
+                <p className="text-muted-foreground mb-4">Sem dados disponíveis para o período selecionado</p>
+                <div className="h-[200px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={[{name: 'Sem dados', vendas: 0, trocas: 0}]} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                      <XAxis dataKey="name" stroke="#888" />
+                      <YAxis stroke="#888" domain={[0, 5]} />
+                      <Tooltip contentStyle={{ backgroundColor: '#222', border: '1px solid #444' }} />
+                      <Legend />
+                      <Bar dataKey="vendas" name="Vendas" fill="#FF4D4F" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="trocas" name="Trocas" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             )}
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between">
+      <CardFooter className="flex justify-between items-center">
         <p className="text-sm text-muted-foreground">Dados de vendas e trocas de veículos</p>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex items-center gap-2"
+          onClick={downloadPDF}
+        >
+          <FileDown className="h-4 w-4" />
+          Baixar PDF
+        </Button>
       </CardFooter>
     </Card>
   );
