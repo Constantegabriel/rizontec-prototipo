@@ -15,7 +15,7 @@ import { Car } from '@/data/cars';
 import { Trash2, LogOut, Upload, Edit, Plus, ImageOff } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import CarEditModal from '@/components/CarEditModal';
-import AdminStats from '@/components/AdminStats';
+import AdminDashboard from '@/components/AdminDashboard';
 import { logCarActivity } from '@/utils/activityLogger';
 import { loadCars, addCar, updateCar, deleteCar, uploadCarImages, DEFAULT_CAR_IMAGE } from '@/services/carService';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -329,7 +329,7 @@ const Admin: React.FC = () => {
         </div>
         
         <div className="mb-6 border-b">
-          <div className="flex space-x-4">
+          <div className="flex flex-wrap space-x-4">
             <button
               className={`px-4 py-2 font-medium transition-colors ${
                 activeTab === 'add' 
@@ -358,7 +358,7 @@ const Admin: React.FC = () => {
               }`}
               onClick={() => setActiveTab('stats')}
             >
-              Estatísticas
+              Dashboard
             </button>
           </div>
         </div>
@@ -378,7 +378,9 @@ const Admin: React.FC = () => {
                         <FormItem>
                           <FormLabel>Nome</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ex: Honda Civic" {...field} />
+                            <div className="form-field">
+                              <Input placeholder="Ex: Honda Civic" {...field} className="bg-transparent border-0" />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -392,7 +394,9 @@ const Admin: React.FC = () => {
                         <FormItem>
                           <FormLabel>Preço</FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="Ex: 75990" {...field} />
+                            <div className="form-field">
+                              <Input type="number" placeholder="Ex: 75990" {...field} className="bg-transparent border-0" />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -406,7 +410,9 @@ const Admin: React.FC = () => {
                         <FormItem>
                           <FormLabel>Ano</FormLabel>
                           <FormControl>
-                            <Input type="number" {...field} />
+                            <div className="form-field">
+                              <Input type="number" {...field} className="bg-transparent border-0" />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -420,7 +426,9 @@ const Admin: React.FC = () => {
                         <FormItem>
                           <FormLabel>Versão</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ex: EXL 2.0 Turbo" {...field} />
+                            <div className="form-field">
+                              <Input placeholder="Ex: EXL 2.0 Turbo" {...field} className="bg-transparent border-0" />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -434,7 +442,9 @@ const Admin: React.FC = () => {
                         <FormItem>
                           <FormLabel>Cor</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ex: Preto" {...field} />
+                            <div className="form-field">
+                              <Input placeholder="Ex: Preto" {...field} className="bg-transparent border-0" />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -448,7 +458,9 @@ const Admin: React.FC = () => {
                         <FormItem>
                           <FormLabel>Quilometragem</FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="Ex: 45000" {...field} />
+                            <div className="form-field">
+                              <Input type="number" placeholder="Ex: 45000" {...field} className="bg-transparent border-0" />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -462,7 +474,9 @@ const Admin: React.FC = () => {
                         <FormItem>
                           <FormLabel>Transmissão</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ex: Automático" {...field} />
+                            <div className="form-field">
+                              <Input placeholder="Ex: Automático" {...field} className="bg-transparent border-0" />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -476,7 +490,9 @@ const Admin: React.FC = () => {
                         <FormItem>
                           <FormLabel>Combustível</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ex: Flex" {...field} />
+                            <div className="form-field">
+                              <Input placeholder="Ex: Flex" {...field} className="bg-transparent border-0" />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -491,26 +507,31 @@ const Admin: React.FC = () => {
                       <FormItem>
                         <FormLabel>Descrição</FormLabel>
                         <FormControl>
-                          <Textarea 
-                            placeholder="Descreva o veículo, seu estado, características, etc." 
-                            className="min-h-[100px]"
-                            {...field} 
-                          />
+                          <div className="form-field">
+                            <Textarea 
+                              placeholder="Descreva o veículo, seu estado, características, etc." 
+                              className="min-h-[100px] bg-transparent border-0"
+                              {...field} 
+                            />
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                   
+                  {/* Features section */}
                   <div className="space-y-2">
                     <label className="block text-sm font-medium">Características</label>
                     <div className="flex">
-                      <Input
-                        value={featureInput}
-                        onChange={(e) => setFeatureInput(e.target.value)}
-                        placeholder="Ex: Ar condicionado"
-                        className="mr-2"
-                      />
+                      <div className="form-field flex-grow mr-2">
+                        <Input
+                          value={featureInput}
+                          onChange={(e) => setFeatureInput(e.target.value)}
+                          placeholder="Ex: Ar condicionado"
+                          className="bg-transparent border-0"
+                        />
+                      </div>
                       <Button 
                         type="button" 
                         onClick={addFeature}
@@ -538,6 +559,7 @@ const Admin: React.FC = () => {
                     )}
                   </div>
                   
+                  {/* Image upload section */}
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="block text-sm font-medium">Imagens do Veículo</label>
@@ -549,16 +571,20 @@ const Admin: React.FC = () => {
                           onChange={() => setUseDefaultImage(prev => !prev)}
                           className="mr-2"
                         />
-                        <label htmlFor="useDefaultImage" className="text-sm text-gray-600">
+                        <label htmlFor="useDefaultImage" className="text-sm text-gray-400">
                           Usar imagem genérica
                         </label>
                       </div>
                     </div>
                     
                     {useDefaultImage ? (
-                      <div className="flex justify-center items-center p-4 border rounded-md">
+                      <div className="flex justify-center items-center p-4 border rounded-md border-dashed">
                         <div className="flex flex-col items-center">
-                          <ImageOff size={64} className="text-gray-400 mb-2" />
+                          <img 
+                            src={DEFAULT_CAR_IMAGE} 
+                            alt="Default car" 
+                            className="h-20 w-20 object-contain opacity-70 mb-2" 
+                          />
                           <p className="text-gray-500">Será usada uma imagem genérica</p>
                         </div>
                       </div>
@@ -636,7 +662,7 @@ const Admin: React.FC = () => {
                     />
                     <div className="flex-grow">
                       <h4 className="font-semibold">{car.name}</h4>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-400">
                         {car.year} • {car.version} • {car.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                       </p>
                     </div>
@@ -666,7 +692,7 @@ const Admin: React.FC = () => {
         )}
         
         {activeTab === 'stats' && (
-          <AdminStats cars={cars} onCarRestored={handleCarRestored} />
+          <AdminDashboard cars={cars} onCarRestored={handleCarRestored} />
         )}
       </main>
       

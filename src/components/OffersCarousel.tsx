@@ -1,104 +1,65 @@
 
-import React, { useEffect, useState } from 'react';
-import { 
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious
-} from "@/components/ui/carousel";
-import { Car as CarIcon } from 'lucide-react';
-
-const offerImages = [
-  {
-    id: 1,
-    src: "https://images.unsplash.com/photo-1583121274602-3e2820c69888?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1200&h=400&q=80",
-    alt: "Oferta especial - Carros premium com desconto",
-    title: "Ofertas Exclusivas"
-  },
-  {
-    id: 2,
-    src: "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1200&h=400&q=80",
-    alt: "Financiamento facilitado",
-    title: "Financiamento"
-  },
-  {
-    id: 3,
-    src: "https://images.unsplash.com/photo-1542362567-b07e54358753?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1200&h=400&q=80",
-    alt: "Carros revisados e com garantia",
-    title: "Garantia Total"
-  }
-];
+import React from 'react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
 const OffersCarousel: React.FC = () => {
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveIndex((current) => (current === offerImages.length - 1 ? 0 : current + 1));
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
+  // Example banner content - in a real app this would come from a database
+  const banners = [
+    {
+      id: 1,
+      title: 'Ofertas Especiais',
+      description: 'Aproveite descontos imperdíveis em nossos veículos premium',
+      image: 'https://images.unsplash.com/photo-1532581291347-9c39cf10a73c?ixlib=rb-4.0.3&q=80&w=1470&auto=format&fit=crop',
+      color: 'from-red-600/80 to-red-900/80',
+    },
+    {
+      id: 2,
+      title: 'Financiamento Facilitado',
+      description: 'Taxas exclusivas e aprovação rápida para seu novo veículo',
+      image: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?ixlib=rb-4.0.3&q=80&w=1470&auto=format&fit=crop',
+      color: 'from-blue-700/80 to-blue-900/80',
+    },
+    {
+      id: 3,
+      title: 'Avaliamos Seu Usado',
+      description: 'Traga seu veículo para avaliação e ganhe as melhores condições',
+      image: 'https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?ixlib=rb-4.0.3&q=80&w=1528&auto=format&fit=crop',
+      color: 'from-green-600/80 to-green-900/80',
+    },
+  ];
 
   return (
-    <div className="w-full py-4 mb-2">
-      <Carousel
-        opts={{
-          align: "start",
-          loop: true,
-        }}
-        className="w-full max-w-[98%] lg:max-w-[90%] xl:max-w-[88%] mx-auto" // Wider on desktop
-        setApi={(api) => {
-          if (api) {
-            api.on("select", () => {
-              setActiveIndex(api.selectedScrollSnap());
-            });
-          }
-        }}
+    <div className="offers-swiper">
+      <Swiper
+        modules={[Navigation, Pagination, Autoplay]}
+        spaceBetween={20}
+        slidesPerView={1}
+        navigation
+        pagination={{ clickable: true }}
+        autoplay={{ delay: 5000, disableOnInteraction: false }}
+        className="rounded-xl overflow-hidden"
       >
-        <CarouselContent className="h-[250px] sm:h-[350px] md:h-[400px]">
-          {offerImages.map((image, index) => (
-            <CarouselItem key={image.id} className="overflow-hidden rounded-xl">
-              <div className="relative h-full w-full">
-                <img 
-                  src={image.src} 
-                  alt={image.alt} 
-                  className="w-full h-full object-cover transition-transform duration-1000 hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end">
-                  <div className="p-6 text-white">
-                    <h3 className="text-2xl font-bold">{image.title}</h3>
-                    <p className="text-sm opacity-90">{image.alt}</p>
-                  </div>
-                </div>
-                
-                {/* Generic car icon for empty states or as overlay */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-10">
-                  <CarIcon size={120} strokeWidth={1} />
-                </div>
+        {banners.map((banner) => (
+          <SwiperSlide key={banner.id}>
+            <div className="relative h-[250px] md:h-[350px] w-full">
+              <img 
+                src={banner.image} 
+                alt={banner.title} 
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              <div className={`absolute inset-0 bg-gradient-to-r ${banner.color} opacity-90`}></div>
+              <div className="absolute inset-0 flex flex-col justify-center items-start p-6 md:p-12 text-white">
+                <h2 className="text-2xl md:text-4xl font-bold mb-2">{banner.title}</h2>
+                <p className="text-lg md:text-xl max-w-xl">{banner.description}</p>
               </div>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        
-        <CarouselPrevious className="left-4 bg-black/50 text-white hover:bg-black/70 hover:text-white border-none" />
-        <CarouselNext className="right-4 bg-black/50 text-white hover:bg-black/70 hover:text-white border-none" />
-        
-        {/* Custom pagination */}
-        <div className="flex justify-center mt-4 gap-2">
-          {offerImages.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setActiveIndex(index)}
-              className={`carousel-pagination-dot ${
-                activeIndex === index ? "carousel-pagination-dot-active" : ""
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
-      </Carousel>
+            </div>
+          </SwiperSlide>
+        ))}
+      </Swiper>
     </div>
   );
 };

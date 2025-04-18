@@ -3,7 +3,7 @@ import { Car } from "@/data/cars";
 import { toast } from "@/components/ui/use-toast";
 
 // URL da imagem genérica para usar quando não houver imagens
-export const DEFAULT_CAR_IMAGE = "https://www.svgrepo.com/show/508699/car.svg";
+export const DEFAULT_CAR_IMAGE = "https://www.shutterstock.com/image-vector/3d-vector-illustration-car-covered-600nw-2512537225.jpg";
 
 // Local storage keys
 const CARS_STORAGE_KEY = "cars_local_storage";

@@ -76,6 +76,7 @@
 /* Custom styles for improved UI elements */
 .search-input {
   @apply bg-input border-none rounded-full py-3 px-5 text-foreground placeholder:text-muted-foreground/70 focus:ring-2 focus:ring-primary/70 transition-all duration-200 text-sm;
+  padding-left: 3rem; /* Increased left padding for search icon */
 }
 
 .search-button {
@@ -98,6 +99,11 @@
 /* Filter and form elements */
 .filter-input {
   @apply bg-secondary border-none rounded-md text-foreground;
+}
+
+/* Improved form input styling with better contrast */
+.form-field {
+  @apply bg-secondary/80 border border-gray-700 rounded-md focus-within:border-primary/70 transition-all duration-200;
 }
 
 /* Button styles */
@@ -131,3 +137,17 @@
   @apply overflow-x-hidden max-w-full;
 }
 
+/* Swiper size adjustment */
+.offers-swiper {
+  max-width: 85%;
+  margin: 0 auto;
+}
+
+/* Cash flow dashboard styles */
+.cash-flow-card {
+  @apply bg-secondary/80 border border-gray-700 rounded-lg p-4 hover:bg-secondary transition-colors;
+}
+
+.stat-card {
+  @apply bg-gradient-to-br from-secondary to-secondary/50 border border-gray-700 rounded-lg p-4;
+}
