@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Carousel,
@@ -35,7 +34,7 @@ const OffersCarousel: React.FC = () => {
   ];
 
   return (
-    <div className="offers-swiper">
+    <div className="offers-swiper container mx-auto px-4">
       <Carousel
         opts={{
           align: "start",

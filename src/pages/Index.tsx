@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
@@ -178,16 +177,6 @@ const Index: React.FC = () => {
                   </div>
                   
                   <Button 
-                    variant="outline" 
-                    onClick={toggleFilters}
-                    className="flex items-center gap-2 whitespace-nowrap rounded-full"
-                  >
-                    <Filter className="h-4 w-4" />
-                    Filtros
-                    <ChevronRight className={`h-4 w-4 transition-transform duration-300 ${showFilters ? 'rotate-90' : ''}`} />
-                  </Button>
-                  
-                  <Button 
                     onClick={handleRefresh} 
                     className="btn-primary"
                   >
@@ -196,21 +185,16 @@ const Index: React.FC = () => {
                   </Button>
                 </div>
                 
-                {showFilters && (
-                  <div 
-                    className={`mt-4 pt-4 border-t border-white/10 transition-all duration-300 
-                      ${showFilters ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}
-                  >
-                    <FilterMenu 
-                      onFilter={handleFilter}
-                      minYear={minYear}
-                      maxYear={maxYear}
-                      minPrice={minPrice}
-                      maxPrice={maxPrice}
-                      brands={brands}
-                    />
-                  </div>
-                )}
+                <div className="mt-4 pt-4 border-t border-white/10">
+                  <FilterMenu 
+                    onFilter={handleFilter}
+                    minYear={minYear}
+                    maxYear={maxYear}
+                    minPrice={minPrice}
+                    maxPrice={maxPrice}
+                    brands={brands}
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>

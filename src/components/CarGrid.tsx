@@ -40,8 +40,8 @@ const CarGrid: React.FC<CarGridProps> = ({ cars }) => {
             car={{
               ...car,
               images: car.images && car.images.length > 0 ? car.images : [DEFAULT_CAR_IMAGE]
-            }} 
-            onClick={() => openModal(car)} 
+            }}
+            onCardClick={() => openModal(car)}
           />
         ))
       )}

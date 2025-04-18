@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Car } from '@/data/cars';
 import CarModal from './CarModal';
@@ -14,10 +13,10 @@ interface CarCardProps {
   isAdmin?: boolean;
   onDelete?: (id: number) => void;
   onUpdate?: () => void;
+  onCardClick?: () => void;
 }
 
-const CarCard: React.FC<CarCardProps> = ({ car, isAdmin = false, onDelete, onUpdate }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+const CarCard: React.FC<CarCardProps> = ({ car, isAdmin = false, onDelete, onUpdate, onCardClick }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSaleDialogOpen, setIsSaleDialogOpen] = useState(false);
 
@@ -37,7 +36,10 @@ const CarCard: React.FC<CarCardProps> = ({ car, isAdmin = false, onDelete, onUpd
 
   return (
     <>
-      <div className="bg-card rounded-lg overflow-hidden transition-all duration-300 hover:translate-y-[-5px] hover:shadow-lg border border-gray-700 group">
+      <div 
+        className="bg-card rounded-lg overflow-hidden transition-all duration-300 hover:translate-y-[-5px] hover:shadow-lg border border-gray-700 group cursor-pointer"
+        onClick={onCardClick}
+      >
         <div className="relative">
           <img
             src={car.images[0] || DEFAULT_CAR_IMAGE}
@@ -57,7 +59,7 @@ const CarCard: React.FC<CarCardProps> = ({ car, isAdmin = false, onDelete, onUpd
           
           {/* Admin actions */}
           {isAdmin && (
-            <div className="absolute top-3 right-3">
+            <div className="absolute top-3 right-3" onClick={(e) => e.stopPropagation()}>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="icon" variant="outline" className="bg-background/80 backdrop-blur-sm hover:bg-background">
@@ -79,10 +81,7 @@ const CarCard: React.FC<CarCardProps> = ({ car, isAdmin = false, onDelete, onUpd
           )}
         </div>
 
-        <div 
-          className="p-4 cursor-pointer"
-          onClick={() => setIsModalOpen(true)}
-        >
+        <div className="p-4">
           <h3 className="font-semibold text-lg">{car.name}</h3>
           <p className="text-muted-foreground text-sm mb-2">{car.version} • {car.year}</p>
           
@@ -100,24 +99,11 @@ const CarCard: React.FC<CarCardProps> = ({ car, isAdmin = false, onDelete, onUpd
           
           <div className="flex justify-between items-center mt-3">
             <p className="font-bold text-xl">{formatPrice(car.price)}</p>
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="rounded-full"
-                onClick={(e) => {
-                  e.stopPropagation(); // Prevent opening the modal
-                  setIsModalOpen(true);
-                }}
-              >
-                Ver detalhes
-              </Button>
-            </div>
           </div>
         </div>
       </div>
       
-      <CarModal car={car} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <CarModal car={car} isOpen={false} onClose={() => {}} />
       
       {/* Delete confirmation dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
