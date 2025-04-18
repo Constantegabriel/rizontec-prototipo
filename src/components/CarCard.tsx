@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { Car } from '@/data/cars';
 import CarModal from './CarModal';
 import { DEFAULT_CAR_IMAGE } from '@/services/carService';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { CircleDollarSign, DollarSign, MoreVertical, Trash2 } from 'lucide-react';
-import SaleCarDialog from './SaleCarDialog';
+import SaleConfirmDialog from './SaleConfirmDialog';
 
 interface CarCardProps {
   car: Car;
@@ -50,14 +50,12 @@ const CarCard: React.FC<CarCardProps> = ({ car, isAdmin = false, onDelete, onUpd
               target.src = DEFAULT_CAR_IMAGE;
             }}
           />
-          {/* Badge for special features */}
           {car.mileage < 10000 && (
             <div className="absolute top-3 left-3 bg-primary text-white text-xs px-2 py-1 rounded-full">
               Baixa Km
             </div>
           )}
           
-          {/* Admin actions */}
           {isAdmin && (
             <div className="absolute top-3 right-3" onClick={(e) => e.stopPropagation()}>
               <DropdownMenu>
@@ -69,10 +67,10 @@ const CarCard: React.FC<CarCardProps> = ({ car, isAdmin = false, onDelete, onUpd
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => setIsSaleDialogOpen(true)}>
                     <DollarSign className="mr-2 h-4 w-4 text-green-500" />
-                    <span>Vendido</span>
+                    <span>Vendido/Trocado</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)}>
-                    <Trash2 className="mr-2 h-4 w-4 text-red-500" />
+                  <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-red-500">
+                    <Trash2 className="mr-2 h-4 w-4" />
                     <span>Excluir</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -105,19 +103,24 @@ const CarCard: React.FC<CarCardProps> = ({ car, isAdmin = false, onDelete, onUpd
       
       <CarModal car={car} isOpen={false} onClose={() => {}} />
       
-      {/* Delete confirmation dialog */}
+      <SaleConfirmDialog 
+        car={car} 
+        isOpen={isSaleDialogOpen} 
+        onClose={() => setIsSaleDialogOpen(false)} 
+        onConfirm={handleSold}
+      />
+      
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão?</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir este veículo? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction 
-              className="bg-red-600 hover:bg-red-700"
+          <div className="flex flex-col gap-4">
+            <Button 
+              variant="destructive" 
               onClick={() => {
                 if (onDelete) {
                   onDelete(car.id);
@@ -125,19 +128,18 @@ const CarCard: React.FC<CarCardProps> = ({ car, isAdmin = false, onDelete, onUpd
                 setIsDeleteDialogOpen(false);
               }}
             >
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Excluir Permanentemente
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+          </div>
         </AlertDialogContent>
       </AlertDialog>
-      
-      {/* Sale dialog */}
-      <SaleCarDialog 
-        car={car}
-        isOpen={isSaleDialogOpen}
-        onClose={() => setIsSaleDialogOpen(false)}
-        onSold={handleSold}
-      />
     </>
   );
 };
