@@ -27,7 +27,6 @@ const Index: React.FC = () => {
     maxMileage: null
   });
 
-  // Fetch cars using React Query
   const { data: allCars = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['cars'],
     queryFn: loadCars,
@@ -36,7 +35,6 @@ const Index: React.FC = () => {
     staleTime: 5000,
   });
 
-  // Calculate min and max values for filters
   const getMinMaxValues = () => {
     if (allCars.length === 0) return { minYear: 2000, maxYear: 2023, minPrice: 0, maxPrice: 200000, brands: [] };
     
@@ -53,12 +51,10 @@ const Index: React.FC = () => {
     };
   };
 
-  // Apply filters
   const applyFilters = () => {
     console.log('Aplicando filtros em', allCars.length, 'carros');
     let results = allCars;
     
-    // Apply search query if exists
     if (searchQuery.trim()) {
       const searchTerm = searchQuery.toLowerCase().trim();
       results = results.filter(car => 
@@ -68,7 +64,6 @@ const Index: React.FC = () => {
       );
     }
     
-    // Apply filters
     if (filters.brand) {
       results = results.filter(car => 
         car.name.toLowerCase().startsWith(filters.brand.toLowerCase())
@@ -99,7 +94,6 @@ const Index: React.FC = () => {
     setFilteredCars(results);
   };
 
-  // Initialize filters when cars are loaded
   useEffect(() => {
     if (allCars.length > 0) {
       console.log('Carros carregados na página inicial:', allCars.length);
@@ -118,12 +112,10 @@ const Index: React.FC = () => {
     }
   }, [allCars]);
 
-  // Apply filters whenever search or filters change
   useEffect(() => {
     applyFilters();
   }, [searchQuery, filters, allCars]);
   
-  // Refresh handler
   const handleRefresh = () => {
     refetch();
     toast({
@@ -131,14 +123,13 @@ const Index: React.FC = () => {
       description: `${allCars.length} veículos carregados.`
     });
   };
-  
+
   const { minYear, maxYear, minPrice, maxPrice, brands } = getMinMaxValues();
-  
+
   const toggleFilters = () => {
     setShowFilters(!showFilters);
   };
 
-  // Add missing handlers
   const handleSearch = (query: string) => {
     setSearchQuery(query);
   };
@@ -152,12 +143,10 @@ const Index: React.FC = () => {
       <Header />
       
       <main className="flex-grow">
-        {/* Hero carousel */}
         <div className="w-full">
           <OffersCarousel />
         </div>
         
-        {/* Main search section - Darker gray background */}
         <div className="bg-secondary py-8">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center mb-6">
@@ -176,31 +165,43 @@ const Index: React.FC = () => {
                     <SearchBar onSearch={handleSearch} />
                   </div>
                   
-                  <Button 
-                    onClick={handleRefresh} 
-                    className="btn-primary"
-                  >
-                    <SearchIcon className="h-4 w-4 mr-2" />
-                    Ver Estoque
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={toggleFilters} 
+                      variant="outline"
+                      className="flex-shrink-0"
+                    >
+                      <Filter className="h-4 w-4 mr-2" />
+                      Filtros
+                    </Button>
+                    
+                    <Button 
+                      onClick={handleRefresh} 
+                      className="flex-shrink-0"
+                    >
+                      <SearchIcon className="h-4 w-4 mr-2" />
+                      Ver Estoque
+                    </Button>
+                  </div>
                 </div>
-                
-                <div className="mt-4 pt-4 border-t border-white/10">
-                  <FilterMenu 
-                    onFilter={handleFilter}
-                    minYear={minYear}
-                    maxYear={maxYear}
-                    minPrice={minPrice}
-                    maxPrice={maxPrice}
-                    brands={brands}
-                  />
-                </div>
+
+                {showFilters && (
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    <FilterMenu 
+                      onFilter={handleFilter}
+                      minYear={minYear}
+                      maxYear={maxYear}
+                      minPrice={minPrice}
+                      maxPrice={maxPrice}
+                      brands={brands}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
         </div>
         
-        {/* Results section */}
         <div className="container mx-auto px-4 py-8">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-semibold">Veículos disponíveis</h2>

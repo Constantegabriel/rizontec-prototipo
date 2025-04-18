@@ -1,5 +1,3 @@
-
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -137,9 +135,9 @@
   @apply overflow-x-hidden max-w-full;
 }
 
-/* Swiper size adjustment */
+/* Swiper size adjustment - removing max-width restriction */
 .offers-swiper {
-  max-width: 85%;
+  width: 100%;
   margin: 0 auto;
 }
 
