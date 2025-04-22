@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -20,6 +19,7 @@ import { logCarActivity } from '@/utils/activityLogger';
 import { loadCars, addCar, updateCar, deleteCar, uploadCarImages, DEFAULT_CAR_IMAGE } from '@/services/carService';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Checkbox } from '@/components/ui/checkbox';
+import CarActionDialog from "@/components/CarActionDialog";
 
 const carSchema = z.object({
   name: z.string().min(1, 'Nome do carro é obrigatório'),
@@ -47,6 +47,8 @@ const Admin: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'add' | 'list' | 'stats'>('add');
   const [useDefaultImage, setUseDefaultImage] = useState(false);
+  const [actionCar, setActionCar] = useState<Car | null>(null);
+  const [isCarActionDialogOpen, setIsCarActionDialogOpen] = useState(false);
   const queryClient = useQueryClient();
   
   const { data: cars = [], isLoading, refetch } = useQuery({
@@ -82,16 +84,13 @@ const Admin: React.FC = () => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
     
-    // Se tínhamos ativado a imagem padrão, desative ao fazer upload
     if (useDefaultImage) {
       setUseDefaultImage(false);
     }
     
     try {
-      // Preview temporário das imagens (antes do upload ao servidor)
       Array.from(files).forEach(file => {
-        // Verificar tamanho do arquivo
-        if (file.size > 5242880) { // 5MB
+        if (file.size > 5242880) {
           toast({
             title: "Arquivo muito grande",
             description: `O arquivo ${file.name} excede o limite de 5MB`,
@@ -109,7 +108,6 @@ const Admin: React.FC = () => {
         reader.readAsDataURL(file);
       });
       
-      // Limpar input para permitir selecionar o mesmo arquivo novamente
       event.target.value = '';
       
       toast({
@@ -148,22 +146,16 @@ const Admin: React.FC = () => {
   const onSubmit = async (values: CarFormValues) => {
     let finalImages: string[] = [];
     
-    // Se a opção de imagem padrão está ativada, use a imagem padrão
     if (useDefaultImage) {
       finalImages = [DEFAULT_CAR_IMAGE];
     } else {
-      // Caso contrário, tente fazer upload das imagens selecionadas
       if (uploadedImages.length > 0) {
         try {
-          // Converter as imagens de base64 para Blob/File para upload
           const filesToUpload: File[] = [];
           for (const dataUrl of uploadedImages) {
-            // Ignorar a imagem padrão
             if (dataUrl === DEFAULT_CAR_IMAGE) continue;
             
-            // Converter de data URL para blob
             try {
-              // Verificar se é uma dataURL ou URL já enviada
               if (dataUrl.startsWith('data:')) {
                 const res = await fetch(dataUrl);
                 const blob = await res.blob();
@@ -171,16 +163,13 @@ const Admin: React.FC = () => {
                 const file = new File([blob], `image-${Date.now()}.${ext}`, { type: blob.type });
                 filesToUpload.push(file);
               } else {
-                // Se já é uma URL, adicione diretamente
                 finalImages.push(dataUrl);
               }
             } catch (e) {
               console.error('Erro ao processar imagem:', e);
-              // Se falhar, ignore esta imagem
             }
           }
           
-          // Se temos arquivos para upload, faça o upload
           if (filesToUpload.length > 0) {
             const uploadedUrls = await uploadCarImages(filesToUpload);
             finalImages = [...finalImages, ...uploadedUrls];
@@ -195,7 +184,6 @@ const Admin: React.FC = () => {
           finalImages = [DEFAULT_CAR_IMAGE];
         }
       } else {
-        // Se não há imagens, use a imagem padrão
         finalImages = [DEFAULT_CAR_IMAGE];
       }
     }
@@ -264,6 +252,45 @@ const Admin: React.FC = () => {
         variant: 'destructive'
       });
     }
+  };
+  
+  const handleActionDialogDelete = async () => {
+    if (!actionCar) return;
+    setIsCarActionDialogOpen(false);
+    await handleDeleteCar(actionCar.id);
+    setActionCar(null);
+  };
+  
+  const handleActionDialogSold = async (
+    salePrice: number,
+    justification: string,
+    type: "sale" | "trade"
+  ) => {
+    if (!actionCar) return;
+    setIsCarActionDialogOpen(false);
+    const details = { price: salePrice, type };
+    const success = markCarAsSold(actionCar.id, details);
+    if (success) {
+      logCarActivity(
+        { ...actionCar, price: salePrice },
+        type === "sale" ? "sold" : "traded",
+        details
+      );
+      toast({
+        title: type === "sale" ? "Veículo vendido" : "Veículo negociado",
+        description: `${actionCar.name} ${actionCar.version} foi ${
+          type === "sale" ? "vendido" : "negociado"
+        } por R$ ${salePrice.toLocaleString("pt-BR")}.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["cars"] });
+    } else {
+      toast({
+        title: "Erro",
+        description: "Não foi possível concluir a operação.",
+        variant: "destructive"
+      });
+    }
+    setActionCar(null);
   };
   
   const handleEditCar = (car: Car) => {
@@ -520,7 +547,6 @@ const Admin: React.FC = () => {
                     )}
                   />
                   
-                  {/* Features section */}
                   <div className="space-y-2">
                     <label className="block text-sm font-medium">Características</label>
                     <div className="flex">
@@ -559,7 +585,6 @@ const Admin: React.FC = () => {
                     )}
                   </div>
                   
-                  {/* Image upload section */}
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="block text-sm font-medium">Imagens do Veículo</label>
@@ -679,7 +704,10 @@ const Admin: React.FC = () => {
                         variant="outline" 
                         size="icon" 
                         className="text-red-500 hover:bg-red-50 hover:text-red-600"
-                        onClick={() => handleDeleteCar(car.id)}
+                        onClick={() => {
+                          setActionCar(car);
+                          setIsCarActionDialogOpen(true);
+                        }}
                       >
                         <Trash2 size={18} />
                       </Button>
@@ -702,6 +730,19 @@ const Admin: React.FC = () => {
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           onUpdate={handleCarUpdated}
+        />
+      )}
+      
+      {actionCar && (
+        <CarActionDialog
+          isOpen={isCarActionDialogOpen}
+          onClose={() => {
+            setIsCarActionDialogOpen(false);
+            setActionCar(null);
+          }}
+          onDelete={handleActionDialogDelete}
+          onSold={handleActionDialogSold}
+          car={actionCar}
         />
       )}
       
